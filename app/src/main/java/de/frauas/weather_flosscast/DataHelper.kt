@@ -8,9 +8,18 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.Locale
 
-fun getRawWeatherData(): String {
-    val url = URL("https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&hourly=temperature_2m")
+private fun stripCoordinate(value: Double): String {
+    return String.format(Locale.ENGLISH, "%.2f", value)
+}
+
+private fun buildUrl(latitude: Double, longitude: Double): String {
+    return "https://api.open-meteo.com/v1/forecast?latitude=${stripCoordinate(latitude)}&longitude=${stripCoordinate(longitude)}&hourly=temperature_2m"
+}
+
+private fun getRawWeatherData(requestUrl: String): String {
+    val url = URL(requestUrl)
     val connection = url.openConnection() as HttpURLConnection
 
     try {
@@ -28,7 +37,8 @@ fun getRawWeatherData(): String {
     }
 }
 
-fun convertToForecastObject(body: String): Forecast {
+private fun convertToForecastObject(body: String): Forecast {
+    // FIXME wrap in try catch for NullPointerException (non-null assertion (!!.))
     val json: JsonObject = Json.parseToJsonElement(body).jsonObject
 
     val unit: String = json["hourly_units"]!!.jsonObject["temperature_2m"]!!.jsonPrimitive.content
@@ -43,4 +53,12 @@ fun convertToForecastObject(body: String): Forecast {
     val forecasts: List<DailyForecast> = temperatures.groupBy { it.dateTime.date }.map { (date, values) -> DailyForecast(date, values) }
 
     return Forecast(forecasts, unit)
+}
+
+fun getForecast(latitude: Double, longitude: Double): Forecast {
+    val url = buildUrl(latitude, longitude)
+    val body = getRawWeatherData(url)
+    val forecast = convertToForecastObject(body)
+
+    return forecast
 }

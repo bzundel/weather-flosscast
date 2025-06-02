@@ -15,6 +15,6 @@ data class DailyForecast(
 
 data class TemperatureItem(
     val dateTime: LocalDateTime,
-    val temperate: Double
+    val temperature: Double
 )
 
