@@ -51,6 +51,8 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.2")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+    implementation("io.github.oshai:kotlin-logging-jvm:7.0.3")
+    implementation("ch.qos.logback:logback-classic:1.5.18")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
