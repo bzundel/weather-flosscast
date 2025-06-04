@@ -1,6 +1,5 @@
 package de.frauas.weather_flosscast
 
-import android.net.http.HttpException
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -11,19 +10,31 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Locale
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import java.io.File
 import java.io.IOException
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
 
 private val logger = KotlinLogging.logger { }
 
 // convert double to string with two digits after the decimal point
 private fun stripCoordinate(value: Double): String {
-    return String.format(Locale.ENGLISH, "%.2f", value)
+    return String.format(Locale.ENGLISH, "%.1f", value)
 }
+
+private fun coordinateToCacheFormat(latitude: Double, longitude: Double) = "${stripCoordinate(latitude)}:${stripCoordinate(longitude)}"
 
 // build request url from latitude and longitude values
 private fun buildUrl(latitude: Double, longitude: Double): String {
@@ -157,8 +168,7 @@ private fun convertToForecastObject(body: String): Forecast {
     return Forecast(currentTime, dailyForecasts, units)
 }
 
-// exposed function to retrieve parsed weather forecast data from long and lat
-fun getForecast(latitude: Double, longitude: Double): Forecast {
+private fun downloadForecast(latitude: Double, longitude: Double): Forecast {
     val url = buildUrl(latitude, longitude)
     val body = getRawWeatherData(url)
     val forecast = convertToForecastObject(body)
@@ -166,6 +176,146 @@ fun getForecast(latitude: Double, longitude: Double): Forecast {
     return forecast
 }
 
-fun main() {
-    getForecast(50.1, 8.5)
+// exposed function to retrieve parsed weather forecast data from long and lat
+suspend fun getForecastFromCacheOrDownload(appDir: File, latitude: Double, longitude: Double): Forecast {
+    return withContext(Dispatchers.IO) {
+
+    val cacheFile: File = File(appDir, "cache.json")
+
+    if (!cacheFile.exists()) {
+        val emptyJsonObjectString: String = Json.encodeToString(JsonObject(emptyMap()))
+        cacheFile.writeText(emptyJsonObjectString)
+    }
+
+    val jsonString: String = cacheFile.readText()
+
+    val cacheForecastList: JsonObject = try {
+        Json.parseToJsonElement(jsonString).jsonObject
+    } catch (e: SerializationException) {
+        logger.error { "Could not parse cache JSON. ${e.message}" }
+
+        throw Exception("Could not parse cache to array", e)
+    }
+
+    val coordinatesCacheFormat = coordinateToCacheFormat(latitude, longitude)
+
+    val cachedMatches: List<JsonObject> = cacheForecastList.filter { it.key == coordinatesCacheFormat }.map { it.value.jsonObject }
+
+    if (cachedMatches.isEmpty()) {
+        val forecast: Forecast = downloadForecast(latitude, longitude)
+        val forecastJson: JsonObject = serializeForecast(forecast)
+        val updatedCacheForecastList: JsonObject = JsonObject(cacheForecastList + (coordinatesCacheFormat to forecastJson))
+        cacheFile.writeText(updatedCacheForecastList.toString())
+
+        return@withContext forecast
+    } else {
+        if (cachedMatches.size > 1) {
+            logger.error { "Found multiple entries for coordinate in cache file." }
+
+            throw IllegalStateException("Multiple entries for same coordinate were found in cache file.")
+        }
+
+        val match: JsonObject = cachedMatches.first()
+        val cacheForecast: Forecast = deserializeForecast(match)
+
+        if (shouldUpdateCache(cacheForecast.timestamp)) {
+            // FIXME maybe outsource to function? same code twice
+            val currentForecast: Forecast = downloadForecast(latitude, longitude)
+            val currentForecastJson = serializeForecast(currentForecast)
+            val updatedCacheForecastList: JsonObject = JsonObject(cacheForecastList + (coordinatesCacheFormat to currentForecastJson))
+            cacheFile.writeText(updatedCacheForecastList.toString())
+
+            return@withContext currentForecast
+        } else {
+            return@withContext cacheForecast
+        }
+    }
+    }
+}
+
+private fun shouldUpdateCache(cacheTimestamp: LocalDateTime): Boolean {
+    val currentTimezone: TimeZone = TimeZone.currentSystemDefault()
+    val currentTimestamp = Clock.System.now().toLocalDateTime(currentTimezone)
+
+    val cacheInstant = cacheTimestamp.toInstant(currentTimezone)
+    val currentInstant = currentTimestamp.toInstant(currentTimezone)
+
+    val duration: Duration = (currentInstant - cacheInstant).absoluteValue
+
+    return duration > 1.hours
+}
+
+private fun serializeForecast(forecast: Forecast): JsonObject {
+    return buildJsonObject {
+        put("timestamp", LocalDateTime.Formats.ISO.format(Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())))
+        put("units", buildJsonObject {
+            put("temperature", forecast.units.temperature)
+            put("humidity", forecast.units.humidity)
+            put("precipitationProbability", forecast.units.precipitationProbability)
+            put("rain", forecast.units.rain)
+            put("showers", forecast.units.showers)
+            put("snow", forecast.units.snow)
+        })
+        put("days", buildJsonArray {
+            forecast.days.forEach {
+                add(buildJsonObject {
+                    put("date", LocalDate.Formats.ISO.format(it.date))
+                    put("hourlyValues", buildJsonArray {
+                        it.hourlyValues.forEach {
+                            add(buildJsonObject {
+                                put("dateTime", LocalDateTime.Formats.ISO.format(it.dateTime))
+                                put("temperature", it.temperature)
+                                put("relativeHumidity", it.relativeHumidity)
+                                put("precipitationProbability", it.precipitationProbability)
+                                put("rain", it.rain)
+                                put("showers", it.showers)
+                                put("snowfall", it.snowfall)
+                                put("weatherCode", it.weatherCode)
+
+                            })
+                        }
+                    })
+                })
+            }
+        })
+    }
+}
+
+private fun deserializeForecast(json: JsonObject): Forecast {
+    val timestamp: LocalDateTime =
+        LocalDateTime.parse(json.getOrThrow("timestamp").jsonPrimitive.content)
+
+    val unitsJson: JsonObject = json.getOrThrow("units").jsonObject
+    val units = Units(
+        unitsJson.getOrThrow("temperature").jsonPrimitive.content,
+        unitsJson.getOrThrow("humidity").jsonPrimitive.content,
+        unitsJson.getOrThrow("precipitationProbability").jsonPrimitive.content,
+        unitsJson.getOrThrow("rain").jsonPrimitive.content,
+        unitsJson.getOrThrow("showers").jsonPrimitive.content,
+        unitsJson.getOrThrow("snow").jsonPrimitive.content,
+    )
+
+    val days: List<DailyForecast> = json.getOrThrow("days").jsonArray.map { dailyElement ->
+        val daily: JsonObject = dailyElement.jsonObject
+
+        DailyForecast(
+            LocalDate.parse(daily.getOrThrow("date").jsonPrimitive.content),
+            daily.getOrThrow("hourlyValues").jsonArray.map {
+                val hourly: JsonObject = it.jsonObject
+
+                Hourly(
+                    LocalDateTime.parse(hourly.getOrThrow("dateTime").jsonPrimitive.content),
+                    hourly.getOrThrow("temperature").jsonPrimitive.content.toDouble(),
+                    hourly.getOrThrow("relativeHumidity").jsonPrimitive.content.toInt(),
+                    hourly.getOrThrow("precipitationProbability").jsonPrimitive.content.toInt(),
+                    hourly.getOrThrow("rain").jsonPrimitive.content.toDouble(),
+                    hourly.getOrThrow("showers").jsonPrimitive.content.toDouble(),
+                    hourly.getOrThrow("snowfall").jsonPrimitive.content.toDouble(),
+                    hourly.getOrThrow("weatherCode").jsonPrimitive.content.toInt(),
+                )
+            }
+        )
+    }
+
+    return Forecast(timestamp, days, units)
 }
