@@ -49,7 +49,7 @@ private fun getRawWeatherData(requestUrl: String): String {
     try {
         connection = url.openConnection() as HttpURLConnection
 
-        logger.debug { "Connection opened successfully" }
+        logger.info { "Connection opened successfully" }
 
         connection.requestMethod = "GET"
 
@@ -67,7 +67,7 @@ private fun getRawWeatherData(requestUrl: String): String {
     } finally {
         connection?.disconnect()
 
-        logger.debug { "Connection closed" }
+        logger.info { "Connection closed" }
     }
 }
 
@@ -100,7 +100,7 @@ private fun convertToForecastObject(body: String): Forecast {
         unitsJson.getOrThrow("snowfall").jsonPrimitive.content
     )
 
-    logger.debug{ "Parsed units" }
+    logger.info{ "Parsed units" }
 
     // extract hourly values and cast to respective type
     val hourly: JsonObject = json["hourly"]!!.jsonObject
@@ -120,7 +120,7 @@ private fun convertToForecastObject(body: String): Forecast {
     val hourlyWeatherCode =
         hourly.getOrThrow("weather_code").jsonArray.map { it.jsonPrimitive.content.toInt() }
 
-    logger.debug { "Parsed hourly data" }
+    logger.info { "Parsed hourly data" }
 
     // assert that all extracted lists have the same length
     try {
@@ -141,7 +141,7 @@ private fun convertToForecastObject(body: String): Forecast {
         logger.error { "Retrieved lists are of different sizes. Some magical API error? ${e.message}" }
     }
 
-    logger.debug { "Passed list size assertion" }
+    logger.info { "Passed list size assertion" }
 
     // map individual lists to single list of packed objects
     val hourlyValues: List<Hourly> = hourlyTime.indices.map {
@@ -161,7 +161,7 @@ private fun convertToForecastObject(body: String): Forecast {
     val dailyForecasts: List<DailyForecast> = hourlyValues.groupBy { it.dateTime.date }
         .map { (date, measurements) -> DailyForecast(date, measurements) }
 
-    logger.debug { "Created daily forecast list" }
+    logger.info { "Created daily forecast list" }
 
     val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
 
@@ -176,63 +176,85 @@ private fun downloadForecast(latitude: Double, longitude: Double): Forecast {
     return forecast
 }
 
-// exposed function to retrieve parsed weather forecast data from long and lat
+// exposed function to get forecast from cache or api
 suspend fun getForecastFromCacheOrDownload(appDir: File, latitude: Double, longitude: Double): Forecast {
     return withContext(Dispatchers.IO) {
+        val cacheFile: File = File(appDir, "cache.json")
 
-    val cacheFile: File = File(appDir, "cache.json")
+        // create cache file containing empty jsonobject if none exists
+        if (!cacheFile.exists()) {
+            val emptyJsonObjectString: String = Json.encodeToString(JsonObject(emptyMap()))
+            cacheFile.writeText(emptyJsonObjectString)
 
-    if (!cacheFile.exists()) {
-        val emptyJsonObjectString: String = Json.encodeToString(JsonObject(emptyMap()))
-        cacheFile.writeText(emptyJsonObjectString)
-    }
-
-    val jsonString: String = cacheFile.readText()
-
-    val cacheForecastList: JsonObject = try {
-        Json.parseToJsonElement(jsonString).jsonObject
-    } catch (e: SerializationException) {
-        logger.error { "Could not parse cache JSON. ${e.message}" }
-
-        throw Exception("Could not parse cache to array", e)
-    }
-
-    val coordinatesCacheFormat = coordinateToCacheFormat(latitude, longitude)
-
-    val cachedMatches: List<JsonObject> = cacheForecastList.filter { it.key == coordinatesCacheFormat }.map { it.value.jsonObject }
-
-    if (cachedMatches.isEmpty()) {
-        val forecast: Forecast = downloadForecast(latitude, longitude)
-        val forecastJson: JsonObject = serializeForecast(forecast)
-        val updatedCacheForecastList: JsonObject = JsonObject(cacheForecastList + (coordinatesCacheFormat to forecastJson))
-        cacheFile.writeText(updatedCacheForecastList.toString())
-
-        return@withContext forecast
-    } else {
-        if (cachedMatches.size > 1) {
-            logger.error { "Found multiple entries for coordinate in cache file." }
-
-            throw IllegalStateException("Multiple entries for same coordinate were found in cache file.")
+            logger.info { "Created empty cache file" }
         }
 
-        val match: JsonObject = cachedMatches.first()
-        val cacheForecast: Forecast = deserializeForecast(match)
+        val jsonString: String = cacheFile.readText()
 
-        if (shouldUpdateCache(cacheForecast.timestamp)) {
-            // FIXME maybe outsource to function? same code twice
-            val currentForecast: Forecast = downloadForecast(latitude, longitude)
-            val currentForecastJson = serializeForecast(currentForecast)
-            val updatedCacheForecastList: JsonObject = JsonObject(cacheForecastList + (coordinatesCacheFormat to currentForecastJson))
+        // parse cache file to jsonobject
+        val cacheForecastList: JsonObject = try {
+            Json.parseToJsonElement(jsonString).jsonObject
+        } catch (e: SerializationException) {
+            logger.error { "Could not parse cache JSON. ${e.message}" }
+
+            throw Exception("Could not parse cache to array", e)
+        }
+
+        logger.info { "Parsed cache file successfully" }
+
+        val coordinatesCacheFormat = coordinateToCacheFormat(latitude, longitude)
+
+        // filter cache list for matches
+        val cachedMatches: List<JsonObject> = cacheForecastList.filter { it.key == coordinatesCacheFormat }.map { it.value.jsonObject }
+
+        if (cachedMatches.isEmpty()) {
+            // if no matches, download from api and save current forecast to cache
+            logger.info { "No matching cached entries found" }
+
+            val forecast: Forecast = downloadForecast(latitude, longitude)
+            val forecastJson: JsonObject = serializeForecast(forecast)
+            val updatedCacheForecastList: JsonObject = JsonObject(cacheForecastList + (coordinatesCacheFormat to forecastJson))
             cacheFile.writeText(updatedCacheForecastList.toString())
 
-            return@withContext currentForecast
+            logger.info { "Wrote current forecast for coordinates $coordinatesCacheFormat to cache" }
+
+            return@withContext forecast
         } else {
-            return@withContext cacheForecast
+            if (cachedMatches.size > 1) { // should technically not be possible. sanity check
+                logger.error { "Found multiple entries for coordinate in cache file." }
+
+                throw IllegalStateException("Multiple entries for same coordinate were found in cache file.")
+            }
+
+            // direct match found
+            val match: JsonObject = cachedMatches.first()
+            val cacheForecast: Forecast = deserializeForecast(match)
+
+            logger.info { "Successfully deserialized cached forecast" }
+
+            // check if cache value is older than an hour
+            if (shouldUpdateCache(cacheForecast.timestamp)) {
+                // update cached value
+                val currentForecast: Forecast = downloadForecast(latitude, longitude)
+                val currentForecastJson = serializeForecast(currentForecast)
+                val updatedCacheForecastList: JsonObject = JsonObject(cacheForecastList + (coordinatesCacheFormat to currentForecastJson))
+                cacheFile.writeText(updatedCacheForecastList.toString())
+                // FIXME maybe outsource to function? same code twice
+
+                logger.info { "Updated forecast cache for coordinates $coordinatesCacheFormat" }
+
+                return@withContext currentForecast
+            } else {
+                // return cached value
+                logger.info { "Returning cached forecast" }
+
+                return@withContext cacheForecast
+            }
         }
-    }
     }
 }
 
+// check if cached value is more than an hour old
 private fun shouldUpdateCache(cacheTimestamp: LocalDateTime): Boolean {
     val currentTimezone: TimeZone = TimeZone.currentSystemDefault()
     val currentTimestamp = Clock.System.now().toLocalDateTime(currentTimezone)
@@ -245,6 +267,7 @@ private fun shouldUpdateCache(cacheTimestamp: LocalDateTime): Boolean {
     return duration > 1.hours
 }
 
+// serialize forecast object to jsonobject for writing
 private fun serializeForecast(forecast: Forecast): JsonObject {
     return buildJsonObject {
         put("timestamp", LocalDateTime.Formats.ISO.format(Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())))
@@ -281,6 +304,7 @@ private fun serializeForecast(forecast: Forecast): JsonObject {
     }
 }
 
+// deserialize jsonobject to forecast object for reading
 private fun deserializeForecast(json: JsonObject): Forecast {
     val timestamp: LocalDateTime =
         LocalDateTime.parse(json.getOrThrow("timestamp").jsonPrimitive.content)
