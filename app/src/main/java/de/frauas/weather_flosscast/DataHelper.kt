@@ -11,6 +11,9 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Locale
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonElement
 import java.io.IOException
@@ -149,7 +152,9 @@ private fun convertToForecastObject(body: String): Forecast {
 
     logger.debug { "Created daily forecast list" }
 
-    return Forecast(dailyForecasts, units)
+    val currentTime: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+
+    return Forecast(currentTime, dailyForecasts, units)
 }
 
 // exposed function to retrieve parsed weather forecast data from long and lat
@@ -159,4 +164,8 @@ fun getForecast(latitude: Double, longitude: Double): Forecast {
     val forecast = convertToForecastObject(body)
 
     return forecast
+}
+
+fun main() {
+    getForecast(50.1, 8.5)
 }

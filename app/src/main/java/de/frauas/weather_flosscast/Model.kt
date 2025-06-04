@@ -4,6 +4,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 
 data class Forecast(
+    val timestamp: LocalDateTime,
     val days: List<DailyForecast>,
     val units: Units
 )
