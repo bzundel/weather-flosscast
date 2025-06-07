@@ -18,6 +18,28 @@ import androidx.lifecycle.lifecycleScope
 import de.frauas.weather_flosscast.ui.theme.WeatherflosscastTheme
 import kotlinx.coroutines.launch
 
+import de.frauas.weather_flosscast.ui.SearchScreen
+import de.frauas.weather_flosscast.ui.WeatherScreen
+import androidx.compose.material3.MaterialTheme
+
+//-------------------------------------------
+//for testing the weather-screen on emulator
+//-------------------------------------------
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            MaterialTheme {
+                WeatherScreen(
+                    cityName = "Frankfurt",
+                    onBack   = { finish() }
+                )
+                }
+            }
+        }
+    }
+
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
