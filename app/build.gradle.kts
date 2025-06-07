@@ -47,7 +47,8 @@ android {
 }
 
 dependencies {
-
+    implementation("com.airbnb.android:lottie-compose:6.0.0")
+    implementation("androidx.compose.material:material-icons-extended:1.5.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -60,6 +61,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
     implementation("io.github.oshai:kotlin-logging-jvm:7.0.3")
     implementation("org.slf4j:slf4j-android:1.7.36")
+    implementation(libs.androidx.benchmark.macro)
+    implementation(libs.androidx.navigation.common.android)
+    implementation(libs.androidx.navigation.compose.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
