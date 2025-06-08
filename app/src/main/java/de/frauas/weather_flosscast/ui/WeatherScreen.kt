@@ -2,6 +2,7 @@ package de.frauas.weather_flosscast.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -22,7 +23,7 @@ import androidx.compose.ui.unit.sp
 import de.frauas.weather_flosscast.R
 import com.airbnb.lottie.compose.*
 import androidx.compose.runtime.getValue
-
+import androidx.compose.foundation.clickable
 //Probedaten//
 
 data class HourlyEntry(val hourLabel: String, val temp: Int)
@@ -62,8 +63,8 @@ private fun colorForBackground(condition: String): Color {
 }
 
 //einstellen hintergrund und name
-val bgC = colorForBackground("sonnig")
-val cityName = "Offenbach"
+val bgC = colorForBackground("regen")
+//val cityName = "Offenbach"
 
 // -----------------------------------------------------------------------------
 // Screen complete
@@ -71,6 +72,7 @@ val cityName = "Offenbach"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeatherScreen(cityName: String, onBack: () -> Unit) {
+    val cityname= cityName
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(bgC),
         contentPadding = PaddingValues(vertical = 24.dp),
@@ -79,7 +81,7 @@ fun WeatherScreen(cityName: String, onBack: () -> Unit) {
         // 1) Header with Lottie-animation
         item {
             Spacer(modifier = Modifier.height(16.dp))
-            WeatherHeader()
+            WeatherHeader(cityname,onBack)
         }
 
         // 2) hourly forecast
@@ -103,7 +105,7 @@ fun WeatherScreen(cityName: String, onBack: () -> Unit) {
 //Header
 // -----------------------------------------------------------------------------
 @Composable
- fun WeatherHeader() {
+ fun WeatherHeader(cityName: String,onBack:   () -> Unit) {
     Box(modifier = Modifier.fillMaxWidth().height(200.dp).background(bgC)) {
 
         Row(modifier = Modifier.fillMaxSize().padding(start = 32.dp),
@@ -120,7 +122,7 @@ fun WeatherScreen(cityName: String, onBack: () -> Unit) {
             //Lottie-animation
             val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.gewitter))
             val progress by animateLottieCompositionAsState(composition, iterations = LottieConstants.IterateForever)
-            LottieAnimation(composition = composition, progress = { progress }, modifier = Modifier.size(90.dp))
+            LottieAnimation(composition = composition, progress = { progress }, modifier = Modifier.size(100.dp))
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -130,7 +132,10 @@ fun WeatherScreen(cityName: String, onBack: () -> Unit) {
                 Text(//Stadtname
                     text = cityName,
                     color = Color.White,
-                    fontSize = 24.sp,
+                    fontSize = 30.sp,
+                    modifier = Modifier
+                        .clickable { onBack()}  // ruft SearchScreen auf
+                        .padding(8.dp)
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -436,7 +441,7 @@ fun SevenDayForecastBlock() {
 
             // ADD IMAGE
             Image(
-                painter = painterResource(id = R.drawable.cloud),
+                painter = painterResource(id = R.drawable.rain),
                 contentDescription = "",
                 modifier = Modifier.size(22.dp)
             )
@@ -467,33 +472,47 @@ fun SevenDayForecastBlock() {
             )
 
             /////////////////////////example rain probability//////////////////////
-            //Spacer(modifier = Modifier.width(16.dp))
-            /*Image(
+            Spacer(modifier = Modifier.width(16.dp))
+            Image(
                 painter = painterResource(id = R.drawable.dropp),//weatherIconResForCode(weatherCode)
                 contentDescription = "",
                 modifier = Modifier.size(10.dp)
             )
             Text(
-                text = " 0%",
+                text = " 100%",
                 style = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
                 modifier = Modifier.weight(1f)
-            )*/
-            //Spacer(modifier = Modifier.width(30.dp))
+            )
+            Spacer(modifier = Modifier.width(50.dp))
+
 
             Image(
-                painter = painterResource(id = R.drawable.sun),//weatherIconResForCode(weatherCode)
+                painter = painterResource(id = R.drawable.storm),//weatherIconResForCode(weatherCode)
                 contentDescription = "",
                 modifier = Modifier.size(25.dp)
             )
-            Spacer(modifier = Modifier.width(110.dp))
+            Spacer(modifier = Modifier.width(40.dp))
+
+            Image(
+                painter = painterResource(id = R.drawable.up),//weatherIconResForCode(weatherCode)
+                contentDescription = "",
+                modifier = Modifier.size(25.dp)
+            )
+
             Text(
-                text = "H:${daily.high}°",
+                text = "${daily.high}°",
                 style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
             )
 
-            Spacer(modifier = Modifier.width(29.dp))
+            Image(
+                painter = painterResource(id = R.drawable.down),//weatherIconResForCode(weatherCode)
+                contentDescription = "",
+                modifier = Modifier.size(25.dp)
+            )
+
+            //Spacer(modifier = Modifier.width(29.dp))
             Text(
-                text = "T:${daily.low}°",
+                text = "${daily.low}°",
                 style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
             )
         }
