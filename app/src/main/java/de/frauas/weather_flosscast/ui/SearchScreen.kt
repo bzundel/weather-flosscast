@@ -125,7 +125,7 @@ fun SearchScreen(
             Column {
                 filteredCities.forEach { city ->
                     CityCard(city) {
-                        //onCitySelected(city.cityName)
+                        onCitySelected(city.cityName)
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                 }
