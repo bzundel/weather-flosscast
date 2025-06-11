@@ -13,7 +13,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -37,13 +36,18 @@ private fun stripCoordinate(value: Double): String {
 
 private fun coordinateToCacheFormat(latitude: Double, longitude: Double) = "${stripCoordinate(latitude)}:${stripCoordinate(longitude)}"
 
-// build request url from latitude and longitude values
-private fun buildUrl(latitude: Double, longitude: Double): String {
+// build forecast request url from latitude and longitude values
+private fun buildForecastUrl(latitude: Double, longitude: Double): String {
     return "https://api.open-meteo.com/v1/forecast?latitude=${stripCoordinate(latitude)}&longitude=${stripCoordinate(longitude)}&daily=sunrise,sunset&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,rain,showers,snowfall"
 }
 
+// build geocoding request url from latitude and longitude values
+private fun buildGeocodingUrl(search: String): String {
+    return "https://geocoding-api.open-meteo.com/v1/search?name=${search}&count=10&language=en&format=json"
+}
+
 // make a call to the request url and return the raw response as a string
-private fun getRawWeatherData(requestUrl: String): String {
+private fun getRawResponse(requestUrl: String): String {
     val url = URL(requestUrl)
     var connection: HttpURLConnection? = null
 
@@ -179,8 +183,8 @@ private fun convertToForecastObject(body: String): Forecast {
 }
 
 private fun downloadForecast(latitude: Double, longitude: Double): Forecast {
-    val url = buildUrl(latitude, longitude)
-    val body = getRawWeatherData(url)
+    val url = buildForecastUrl(latitude, longitude)
+    val body = getRawResponse(url)
     val forecast = convertToForecastObject(body)
 
     return forecast
@@ -356,4 +360,38 @@ private fun deserializeForecast(json: JsonObject): Forecast {
     }
 
     return Forecast(timestamp, days, units)
+}
+
+// make a request to the open-meteo geocoding api and return the matches
+suspend fun getCitySearchResults(search: String): List<City> {
+    return withContext(Dispatchers.IO) {
+        val url: String = buildGeocodingUrl(search)
+        val body: String = getRawResponse(url)
+
+        val json: JsonObject = try {
+            Json.parseToJsonElement(body).jsonObject
+        } catch (e: SerializationException) {
+            logger.error { "Could not parse received JSON. ${e.message}" }
+
+            throw Exception("Could not parse to objects", e)
+        }
+
+        logger.info { "Deserialized API response" }
+
+        val cities = json.getOrThrow("results").jsonArray.map {
+            val cityJson: JsonObject = it.jsonObject
+
+            City(
+                name = cityJson.getOrThrow("name").jsonPrimitive.content,
+                state = cityJson.getOrThrow("admin1").jsonPrimitive.content,
+                country = cityJson.getOrThrow("country").jsonPrimitive.content,
+                latitude = cityJson.getOrThrow("latitude").jsonPrimitive.content.toDouble(),
+                longitude = cityJson.getOrThrow("longitude").jsonPrimitive.content.toDouble()
+            )
+        }
+
+        logger.info { "Parsed JSON to objects" }
+
+        return@withContext cities
+    }
 }

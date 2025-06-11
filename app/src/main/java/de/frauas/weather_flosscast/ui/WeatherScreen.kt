@@ -27,9 +27,10 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
-import androidx.compose.foundation.clickable
 import androidx.compose.ui.platform.LocalContext
+import de.frauas.weather_flosscast.City
 import de.frauas.weather_flosscast.Forecast
+import de.frauas.weather_flosscast.getCitySearchResults
 import de.frauas.weather_flosscast.getForecastFromCacheOrDownload
 
 //Probedaten//
@@ -110,13 +111,14 @@ fun WeatherScreen(cityName: String, onBack: () -> Unit) {
             InfoBoxesSection()
         }
 
-        // button only for debugging
+        // button for debugging
         item {
             Spacer(modifier = Modifier.height(32.dp))
             Button(
                 onClick = {
                     lifecycleOwner.lifecycleScope.launch {
                         val forecast: Forecast = getForecastFromCacheOrDownload(filesDir, 50.1, 8.6)
+                        val matches: List<City> = getCitySearchResults("Frankfurt")
 
                         val dummy = Unit
                     }
