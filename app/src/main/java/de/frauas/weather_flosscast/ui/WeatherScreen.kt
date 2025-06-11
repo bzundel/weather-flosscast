@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,7 +24,14 @@ import androidx.compose.ui.unit.sp
 import de.frauas.weather_flosscast.R
 import com.airbnb.lottie.compose.*
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.LocalContext
+import de.frauas.weather_flosscast.Forecast
+import de.frauas.weather_flosscast.getForecastFromCacheOrDownload
+
 //Probedaten//
 
 data class HourlyEntry(val hourLabel: String, val temp: Int)
@@ -73,6 +81,9 @@ val bgC = colorForBackground("regen")
 @Composable
 fun WeatherScreen(cityName: String, onBack: () -> Unit) {
     val cityname= cityName
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val filesDir = LocalContext.current.filesDir
+
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(bgC),
         contentPadding = PaddingValues(vertical = 24.dp),
@@ -97,6 +108,26 @@ fun WeatherScreen(cityName: String, onBack: () -> Unit) {
         // 4) the 4 infoboxes
         item {
             InfoBoxesSection()
+        }
+
+        // button only for debugging
+        item {
+            Spacer(modifier = Modifier.height(32.dp))
+            Button(
+                onClick = {
+                    lifecycleOwner.lifecycleScope.launch {
+                        val forecast: Forecast = getForecastFromCacheOrDownload(filesDir, 50.1, 8.6)
+
+                        val dummy = Unit
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+            ) {
+                Text("Get forecast")
+            }
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

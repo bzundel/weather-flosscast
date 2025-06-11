@@ -13,6 +13,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -38,7 +39,7 @@ private fun coordinateToCacheFormat(latitude: Double, longitude: Double) = "${st
 
 // build request url from latitude and longitude values
 private fun buildUrl(latitude: Double, longitude: Double): String {
-    return "https://api.open-meteo.com/v1/forecast?latitude=${stripCoordinate(latitude)}&longitude=${stripCoordinate(longitude)}&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,rain,showers,snowfall"
+    return "https://api.open-meteo.com/v1/forecast?latitude=${stripCoordinate(latitude)}&longitude=${stripCoordinate(longitude)}&daily=sunrise,sunset&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,rain,showers,snowfall"
 }
 
 // make a call to the request url and return the raw response as a string
@@ -157,9 +158,18 @@ private fun convertToForecastObject(body: String): Forecast {
         )
     }
 
+    val daily: JsonObject = json["daily"]!!.jsonObject
+    val sunrise: List<LocalDateTime> = daily.getOrThrow("sunrise").jsonArray.map { LocalDateTime.parse(it.jsonPrimitive.content) }
+    val sunset: List<LocalDateTime> = daily.getOrThrow("sunset").jsonArray.map { LocalDateTime.parse(it.jsonPrimitive.content) }
+
+    val currentTimezone: TimeZone = TimeZone.currentSystemDefault()
+
     // group hourly values into separate dates
     val dailyForecasts: List<DailyForecast> = hourlyValues.groupBy { it.dateTime.date }
-        .map { (date, measurements) -> DailyForecast(date, measurements) }
+        .map { (date, measurements) -> DailyForecast(date
+            , measurements
+            , sunrise.first { it.date == date }.toInstant(TimeZone.UTC).toLocalDateTime(currentTimezone)
+            , sunset.first { it.date == date }.toInstant(TimeZone.UTC).toLocalDateTime(currentTimezone)) }
 
     logger.info { "Created daily forecast list" }
 
@@ -298,6 +308,8 @@ private fun serializeForecast(forecast: Forecast): JsonObject {
                             })
                         }
                     })
+                    put("sunrise", it.sunrise.toString())
+                    put("sunset", it.sunset.toString())
                 })
             }
         })
@@ -337,7 +349,9 @@ private fun deserializeForecast(json: JsonObject): Forecast {
                     hourly.getOrThrow("snowfall").jsonPrimitive.content.toDouble(),
                     hourly.getOrThrow("weatherCode").jsonPrimitive.content.toInt(),
                 )
-            }
+            },
+            LocalDateTime.parse(daily.getOrThrow("sunrise").jsonPrimitive.content),
+            LocalDateTime.parse(daily.getOrThrow("sunset").jsonPrimitive.content)
         )
     }
 

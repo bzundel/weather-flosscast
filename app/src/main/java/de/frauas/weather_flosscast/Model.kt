@@ -1,5 +1,6 @@
 package de.frauas.weather_flosscast
 
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 
@@ -11,7 +12,9 @@ data class Forecast(
 
 data class DailyForecast(
     val date: LocalDate,
-    val hourlyValues: List<Hourly>
+    val hourlyValues: List<Hourly>,
+    val sunrise: LocalDateTime,
+    val sunset: LocalDateTime
 )
 
 data class Hourly(
