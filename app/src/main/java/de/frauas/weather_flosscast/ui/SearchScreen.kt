@@ -36,12 +36,12 @@ import androidx.compose.ui.text.input.ImeAction
 import de.frauas.weather_flosscast.City
 import de.frauas.weather_flosscast.CityList
 import de.frauas.weather_flosscast.Forecast
-import de.frauas.weather_flosscast.decodeCity
-import de.frauas.weather_flosscast.encodeCity
 import de.frauas.weather_flosscast.getCitySearchResults
 import de.frauas.weather_flosscast.getForecastFromCacheOrDownload
-import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalTime
+import kotlinx.datetime.toLocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
@@ -253,8 +253,17 @@ fun NewCityCard(
             Text(
                 text = city.cityName,
                 style = MaterialTheme.typography.bodyMedium,
-                fontSize = 22.sp,
+                fontSize = 25.sp,
                 color = Color.White
+            )
+
+            Spacer(modifier = Modifier.width(3.dp))
+
+            Text(
+                text = city.state + ", " + city.country,
+                style = MaterialTheme.typography.bodyMedium,
+                fontSize = 20.sp,
+                color = Color.LightGray
             )
             Spacer(modifier = Modifier.width(8.dp))
         }
@@ -322,7 +331,7 @@ fun CityCard(    city: City,
                     //last update was when
                     Text(
                         //text = "${forecast?.timestamp?.time?.hour ?: "--"}:${forecast?.timestamp?.time?.minute ?: "--"}",
-                        text = forecast?.timestamp?.time?.toJavaLocalTime()?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "--",
+                        text = "last updated: " + forecast?.timestamp?.time?.toJavaLocalTime()?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "--",
                         style = MaterialTheme.typography.bodySmall.copy(color = Color.White),
 
                     )
@@ -338,7 +347,9 @@ fun CityCard(    city: City,
             Column (){
                 //current temperature
                 Text(
-                    text = "${forecast?.days?.firstOrNull()?.hourlyValues?.firstOrNull()?.temperature?.roundToInt() ?: "--"}°", //Live temp in
+                    //text = "${forecast?.days?.firstOrNull()?.hourlyValues?.firstOrNull()?.temperature?.roundToInt() ?: "--"}°", //Live temp now
+                    //text = "${forecast?.days?.getOrNull(1)?.hourlyValues?.getOrNull(getTempForHour(forecast, ))?.temperature?.roundToInt() ?: "--"}°", //Live temp now
+                    text = "${forecast?.getCurrentTemperature()}" + "°",
                     style = MaterialTheme.typography.titleMedium,
                     fontSize = 22.sp,
                     color = Color.White
@@ -348,14 +359,48 @@ fun CityCard(    city: City,
 
                 //High and low temperatures under
                 Text(
-                    text = "${forecast?.days?.firstOrNull()?.hourlyValues?.maxOfOrNull { it.temperature }?.roundToInt() ?: "--"}°" +
-                            "/${forecast?.days?.firstOrNull()?.hourlyValues?.minOfOrNull { it.temperature }?.roundToInt() ?: "--"}°",
+
+                    /*text = "${forecast?.days?.!!!firstOrNull()!!!?.hourlyValues?.maxOfOrNull { it.temperature }?.roundToInt() ?: "--"}°" +//MIN Max only for last day and last hour, so it is wrong!
+                            "/${forecast?.days?.!!!firstOrNull()?!!!.hourlyValues?.minOfOrNull { it.temperature }?.roundToInt() ?: "--"}°",*/
+                    text = "${getDailyMinTemp(forecast).roundToInt() ?: "--"}°"
+                    + "/${getDailyMaxTemp(forecast).roundToInt() ?: "--"}°",
                     style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.8f))
                 )
             }
-
         }
     }
+}
+
+fun Forecast.getCurrentTemperature(): Int? {//Utility function to update newest temperature
+    val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+    val today = now.date
+    val currentHour = now.hour
+
+    val todayForecast = this.days.firstOrNull { it.date == today } ?: return null
+
+    return todayForecast.hourlyValues.firstOrNull { it.dateTime.hour == currentHour }?.temperature?.roundToInt()
+}
+fun getDailyMinTemp(forecast: Forecast?): Double {
+    if (forecast == null) return 0.0
+
+    val allTemps = mutableListOf<Double>()
+
+    for (daily in forecast.days) {
+        // add all temps to the list
+        allTemps.addAll(daily.hourlyValues.map { it.temperature })
+    }
+    return allTemps.minOrNull() ?: 0.0
+}
+fun getDailyMaxTemp(forecast: Forecast?): Double {
+    if (forecast == null) return 0.0
+
+    val allTemps = mutableListOf<Double>()
+
+    for (daily in forecast.days) {
+        // add all temps to the list
+        allTemps.addAll(daily.hourlyValues.map { it.temperature })
+    }
+    return allTemps.maxOrNull() ?: 0.0
 }
 
 @Preview(showBackground = true)

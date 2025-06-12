@@ -383,8 +383,8 @@ suspend fun getCitySearchResults(search: String): List<City> {
 
             City(
                 cityName = cityJson.getOrThrow("name").jsonPrimitive.content,
-                //state = cityJson.getOrThrow("admin1").jsonPrimitive.content,
-                //country = cityJson.getOrThrow("country").jsonPrimitive.content,
+                state = cityJson.getOrThrow("admin1").jsonPrimitive.content,
+                country = cityJson.getOrThrow("country").jsonPrimitive.content,
                 latitude = cityJson.getOrThrow("latitude").jsonPrimitive.content.toDouble(),
                 longitude = cityJson.getOrThrow("longitude").jsonPrimitive.content.toDouble(),
             )
