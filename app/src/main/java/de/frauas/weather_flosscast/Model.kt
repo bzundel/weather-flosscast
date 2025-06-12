@@ -1,6 +1,5 @@
 package de.frauas.weather_flosscast
 
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 
@@ -37,10 +36,12 @@ data class Units(
     val snow: String,
 )
 
+@kotlinx.serialization.Serializable
 data class City(
-    val name: String,
-    val state: String,
-    val country: String,
+    //val name: String,
+    //val state: String,
+    //val country: String,
+    val cityName: String,
     val latitude: Double,
     val longitude: Double
 )

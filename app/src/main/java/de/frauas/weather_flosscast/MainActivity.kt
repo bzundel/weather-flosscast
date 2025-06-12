@@ -1,17 +1,13 @@
 package de.frauas.weather_flosscast
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import de.frauas.weather_flosscast.ui.SearchScreen
 import de.frauas.weather_flosscast.ui.WeatherScreen
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -41,18 +37,24 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                AppNavHost()
+
+                if(CityList.getCities(this).isEmpty()){
+                    Toast.makeText(this, "Bitte zuerst ein Ort hinzufügen", Toast.LENGTH_SHORT).show()
+                    AppNavHost("search")
+                }else{
+                    AppNavHost("weather/${CityList.getCities(this).first().cityName}")
+                }
             }
         }
     }
 }
 @Composable
-fun AppNavHost() {
+fun AppNavHost(startDestination: String) {
     // 1) Erzeuge einen NavController
     val navController = rememberNavController()
     NavHost(
         navController = navController,
-        startDestination = "search"    // Startscreen
+        startDestination = startDestination    // Startscreen
     ) {
         // 2) SearchScreen-Route
         composable("search") {
@@ -60,10 +62,6 @@ fun AppNavHost() {
                 onCitySelected = { city ->
                     // wenn Karte angeklickt, navigiere zu WeatherScreen mit city als Argument
                     navController.navigate("weather/${city}")
-                },
-                onSearch = { query ->
-                    // wenn Lupe oder IME-Search
-                    navController.navigate("weather/${query}")
                 }
             )
         }
@@ -73,12 +71,10 @@ fun AppNavHost() {
             arguments = listOf(navArgument("cityName") {
                 type = NavType.StringType
             })
-        ) { backStackEntry ->
-            // Extrahiere das Argument
-            val city = backStackEntry.arguments?.getString("cityName") ?: ""
+        ) { backStackEntry -> val city = backStackEntry.arguments?.getString("cityName") ?: ""
             WeatherScreen(
-                cityName = city,
-                onBack   = { navController.popBackStack() }  // zurück zur SearchScreen
+                city,
+                onBack   = { navController.navigate("search") }  // zurück zur SearchScreen
             )
         }
     }

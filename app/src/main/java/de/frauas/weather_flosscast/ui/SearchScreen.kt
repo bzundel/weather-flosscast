@@ -1,5 +1,7 @@
 package de.frauas.weather_flosscast.ui
 
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,18 +23,31 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.res.painterResource
 import de.frauas.weather_flosscast.R
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.IconButton
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.ImeAction
+import de.frauas.weather_flosscast.City
+import de.frauas.weather_flosscast.CityList
+import de.frauas.weather_flosscast.Forecast
+import de.frauas.weather_flosscast.decodeCity
+import de.frauas.weather_flosscast.encodeCity
+import de.frauas.weather_flosscast.getCitySearchResults
+import de.frauas.weather_flosscast.getForecastFromCacheOrDownload
+import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.toJavaLocalTime
+import java.time.format.DateTimeFormatter
+import kotlin.math.roundToInt
 
 
-/**
- * Einfaches Datenmodell für die Dummy-Liste von Städten.
- */
-data class CityWeather(
+//DataList Model for localization
+/*data class localizationData(
     val cityName: String,
     val currentTemp: Int,
     val condition: String,
@@ -43,10 +58,9 @@ data class CityWeather(
 
 //Dummy-data: drei Beispiel-Städte
 private val dummyCities = listOf(
-    CityWeather("Frankfurt am Main", 20, "Regen",       24, 16, "16:15"),
-    CityWeather("Berlin",    23, "Sonnig",      25, 18, "16:15"),
-    CityWeather("München",    9, "Schneeschauer", 11,  4, "16:15")
-)
+    City("Frankfurt am Main", 50.1143, 8.6815),
+    City("Berlin",    52.5200, 13.4050)
+)*/
 
 //function for select the card-color
 private fun colorForCondition(condition: String): Color {
@@ -62,9 +76,10 @@ private fun colorForCondition(condition: String): Color {
 @Composable
 fun SearchScreen(
     onCitySelected: (String) -> Unit,
-    onSearch: (String) -> Unit
 ) {
-    var query by remember { mutableStateOf("") }
+    val context = LocalContext.current  // Safe save for app context for Compose
+    var inputText by remember { mutableStateOf("") }    //updates directly
+    var query by remember { mutableStateOf("") } // updates only after clicking
 
     //Layout
     Scaffold(
@@ -95,8 +110,8 @@ fun SearchScreen(
         ) {
             // 1) searchfield with icon-button to search
             TextField(
-                value = query,
-                onValueChange = { query = it },
+                value = inputText,
+                onValueChange = { inputText = it },
                 placeholder = { Text("Stadt oder Flughafen suchen", color = Color.Gray) },
                 singleLine = true,
                 modifier = Modifier
@@ -104,41 +119,156 @@ fun SearchScreen(
                     .height(56.dp),
                 shape = RoundedCornerShape(8.dp),
 
-            trailingIcon = {
-                IconButton(onClick = {
-                    // Wenn der Nutzer auf das Lupen-Icon klickt
-                    //onSearch(query)
-                }) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Suchen",
-                        tint = Color.Black
-                    )
+                // Zeigt "Suchen" auf der Tastatur
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    imeAction = ImeAction.Search
+                ),
+
+                // Reagiert auf "Suchen"-Taste (Enter)
+                keyboardActions = KeyboardActions(
+                    onSearch = {
+                        query = inputText
+                        inputText = ""
+                    }
+                ),
+
+
+                trailingIcon = {
+                    IconButton(onClick = {
+                        query = inputText //reacts on search button too
+                        inputText = "" //Empties search field
+
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Suchen",
+                            tint = Color.Black
+                        )
+                    }
                 }
-            }
             )
             //Space between searchbar and list
             Spacer(modifier = Modifier.height(16.dp))
 
-            //2) List
-            val filteredCities = dummyCities.filter { it.cityName.contains(query, ignoreCase = true) }
-            Column {
-                filteredCities.forEach { city ->
-                    CityCard(city) {
-                        onCitySelected(city.cityName)
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
+            //2) Drawing the list with cities
+            CityListView(context = context, query = query, onCitySelected = onCitySelected)
+        }
+    }
+}
+
+
+@Composable
+fun CityListView(
+    context: Context,
+    query: String,
+    onCitySelected: (String) -> Unit
+) {
+    //1. Show searched/new cities
+    var searchResults by remember { mutableStateOf<List<City>>(emptyList()) }
+
+    // Leere die Liste zuerst, dann lade neue Ergebnisse
+    LaunchedEffect(query) {
+        if (query.isNotBlank()) {
+            searchResults = emptyList() // Liste vor dem Laden leeren
+            try {
+                val cities = getCitySearchResults(query)
+                searchResults = cities
+
+
+                /*// API-Test
+                cities.forEach { city ->
+                    Toast.makeText(context, "'${city.cityName}'", Toast.LENGTH_SHORT).show()
+                }*/
+            } catch (e: Exception) {
+                Toast.makeText(context, "Fehler beim Laden der Suche", Toast.LENGTH_SHORT).show()
+                e.printStackTrace()
             }
+        } else {
+            searchResults = emptyList() // Wenn leerer Suchbegriff, ebenfalls leeren
+        }
+    }
+
+    Column {
+        searchResults.forEach { city ->
+            NewCityCard(context = context, city = city) {
+                onCitySelected(city.cityName)
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+    }
+    //2. Show saved cities
+    val appDir = context.filesDir
+    val savedCities = CityList.getCities(context).filter { it.cityName.contains(query, ignoreCase = true) }
+    var forecasts by remember { mutableStateOf<Map<String, Forecast>>(emptyMap()) }
+
+    LaunchedEffect(savedCities) {
+        val result = mutableMapOf<String, Forecast>()
+        for (city in savedCities) {
+            try {
+                val forecast = getForecastFromCacheOrDownload(appDir, city.latitude, city.longitude)
+                result[city.cityName] = forecast
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        forecasts = result
+    }
+
+    Column {
+        savedCities.forEach { city ->
+            val forecast = forecasts[city.cityName]
+            CityCard(city = city, forecast = forecast) {
+                onCitySelected(city.cityName)
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+    }
+
+}
+
+//Cards for searched cities
+@Composable
+fun NewCityCard(
+    context: Context,
+    city: City,
+    onCitySelected: (String) -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(15.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp)
+            .clickable {
+                CityList.addCity(context, city)               //  Add city to saved list
+                onCitySelected(city.cityName)                 //  Notify NavHost
+                Toast.makeText(context, "${city.cityName} hinzugefügt", Toast.LENGTH_SHORT).show()
+            },
+        colors = CardDefaults.cardColors(containerColor = Color.DarkGray)
+    ) {
+        Column(
+            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.weight(1f).padding(16.dp)
+        ) {
+            Text(
+                text = city.cityName,
+                style = MaterialTheme.typography.bodyMedium,
+                fontSize = 22.sp,
+                color = Color.White
+            )
+            Spacer(modifier = Modifier.width(8.dp))
         }
     }
 }
 
 //Cards for the citys
 @Composable
-fun CityCard(city: CityWeather, onClick: () -> Unit) {
+fun CityCard(    city: City,
+                 forecast: Forecast?, // nullable
+                 onClick: () -> Unit
+) {
     // Hintergrundfarbe je nach Wetterbedingung
-    val bgColor = colorForCondition(city.condition)
+    val bgColor = colorForCondition("regen"/*city.condition*/)
 
     Card(
         shape = RoundedCornerShape(15.dp),
@@ -157,7 +287,7 @@ fun CityCard(city: CityWeather, onClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ){
             //Icon of current condition
-            val iconRes = when (city.condition.lowercase()) {
+            val iconRes = when ("regen"/*city.condition.lowercase()*/) {
                 "sonnig", "klar", "heiter"       -> R.drawable.sun
                 "regen", "regnerisch", "niesel"  -> R.drawable.rain
                 "schnee", "schneeschauer"        -> R.drawable.snow
@@ -167,7 +297,7 @@ fun CityCard(city: CityWeather, onClick: () -> Unit) {
             if (iconRes != null) {
                 Image(
                     painter = painterResource(id = iconRes),
-                    contentDescription = city.condition,
+                    contentDescription = "regen"/*city.condition*/,
                     modifier = Modifier.size(40.dp)
                 )
             } else { Spacer(modifier = Modifier.width(40.dp)) }
@@ -189,15 +319,16 @@ fun CityCard(city: CityWeather, onClick: () -> Unit) {
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    //last updates Uhrzeit
+                    //last update was when
                     Text(
-                        text = city.lastUpdated,
+                        //text = "${forecast?.timestamp?.time?.hour ?: "--"}:${forecast?.timestamp?.time?.minute ?: "--"}",
+                        text = forecast?.timestamp?.time?.toJavaLocalTime()?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "--",
                         style = MaterialTheme.typography.bodySmall.copy(color = Color.White),
 
                     )
                 //city current weather condition
                 Text(
-                    text = city.condition,
+                    text = "regen"/*city.condition*/,
                     style = MaterialTheme.typography.bodySmall.copy(color = Color.White),
                     fontSize = 14.sp
                 )
@@ -205,9 +336,9 @@ fun CityCard(city: CityWeather, onClick: () -> Unit) {
 
             //temperatures in a column
             Column (){
-                //current temperatur
+                //current temperature
                 Text(
-                    text = "${city.currentTemp}°",
+                    text = "${forecast?.days?.firstOrNull()?.hourlyValues?.firstOrNull()?.temperature?.roundToInt() ?: "--"}°", //Live temp in
                     style = MaterialTheme.typography.titleMedium,
                     fontSize = 22.sp,
                     color = Color.White
@@ -217,7 +348,8 @@ fun CityCard(city: CityWeather, onClick: () -> Unit) {
 
                 //High and low temperatures under
                 Text(
-                    text = "${city.highTemp}°/${city.lowTemp}°",
+                    text = "${forecast?.days?.firstOrNull()?.hourlyValues?.maxOfOrNull { it.temperature }?.roundToInt() ?: "--"}°" +
+                            "/${forecast?.days?.firstOrNull()?.hourlyValues?.minOfOrNull { it.temperature }?.roundToInt() ?: "--"}°",
                     style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.8f))
                 )
             }
@@ -226,16 +358,10 @@ fun CityCard(city: CityWeather, onClick: () -> Unit) {
     }
 }
 
-
-
-
-
-
 @Preview(showBackground = true)
 @Composable
 fun SearchScreenPreview() {
-    SearchScreen(onCitySelected = {},
-        onSearch = { query ->
+    SearchScreen(onCitySelected = { query ->
             // Beispiel-Callback:
             // Hier könntest du navigieren, Toast anzeigen, Liste neu laden...
             println("Suchtext abgeschickt: $query")

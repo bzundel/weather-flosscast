@@ -38,7 +38,7 @@ private fun coordinateToCacheFormat(latitude: Double, longitude: Double) = "${st
 
 // build forecast request url from latitude and longitude values
 private fun buildForecastUrl(latitude: Double, longitude: Double): String {
-    return "https://api.open-meteo.com/v1/forecast?latitude=${stripCoordinate(latitude)}&longitude=${stripCoordinate(longitude)}&daily=sunrise,sunset&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,rain,showers,snowfall"
+    return "https://api.open-meteo.com/v1/forecast?latitude=${stripCoordinate(latitude)}&longitude=${stripCoordinate(longitude)}&daily=sunrise,sunset&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,rain,showers,snowfall&timezone=auto" //setting timezone to auto
 }
 
 // build geocoding request url from latitude and longitude values
@@ -382,13 +382,13 @@ suspend fun getCitySearchResults(search: String): List<City> {
             val cityJson: JsonObject = it.jsonObject
 
             City(
-                name = cityJson.getOrThrow("name").jsonPrimitive.content,
-                state = cityJson.getOrThrow("admin1").jsonPrimitive.content,
-                country = cityJson.getOrThrow("country").jsonPrimitive.content,
+                cityName = cityJson.getOrThrow("name").jsonPrimitive.content,
+                //state = cityJson.getOrThrow("admin1").jsonPrimitive.content,
+                //country = cityJson.getOrThrow("country").jsonPrimitive.content,
                 latitude = cityJson.getOrThrow("latitude").jsonPrimitive.content.toDouble(),
-                longitude = cityJson.getOrThrow("longitude").jsonPrimitive.content.toDouble()
+                longitude = cityJson.getOrThrow("longitude").jsonPrimitive.content.toDouble(),
             )
-        }
+        } ?: emptyList()
 
         logger.info { "Parsed JSON to objects" }
 
