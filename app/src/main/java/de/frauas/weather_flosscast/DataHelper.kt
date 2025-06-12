@@ -38,7 +38,7 @@ private fun coordinateToCacheFormat(latitude: Double, longitude: Double) = "${st
 
 // build forecast request url from latitude and longitude values
 private fun buildForecastUrl(latitude: Double, longitude: Double): String {
-    return "https://api.open-meteo.com/v1/forecast?latitude=${stripCoordinate(latitude)}&longitude=${stripCoordinate(longitude)}&daily=sunrise,sunset&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,rain,showers,snowfall&timezone=auto" //setting timezone to auto
+    return "https://api.open-meteo.com/v1/forecast?latitude=${stripCoordinate(latitude)}&longitude=${stripCoordinate(longitude)}&daily=sunrise,sunset&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,rain,showers,snowfall"
 }
 
 // build geocoding request url from latitude and longitude values
