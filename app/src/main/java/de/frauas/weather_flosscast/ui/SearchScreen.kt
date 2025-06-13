@@ -23,6 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.res.painterResource
@@ -44,23 +45,6 @@ import kotlinx.datetime.toJavaLocalTime
 import kotlinx.datetime.toLocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
-
-
-//DataList Model for localization
-/*data class localizationData(
-    val cityName: String,
-    val currentTemp: Int,
-    val condition: String,
-    val highTemp: Int,
-    val lowTemp: Int,
-    val lastUpdated: String
-)
-
-//Dummy-data: drei Beispiel-Städte
-private val dummyCities = listOf(
-    City("Frankfurt am Main", 50.1143, 8.6815),
-    City("Berlin",    52.5200, 13.4050)
-)*/
 
 //function for select the card-color
 private fun colorForCondition(condition: String): Color {
@@ -101,13 +85,14 @@ fun SearchScreen(
     ) {
         paddingValues ->
     //Layout searchfield + list
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black)
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
+            item {
             // 1) searchfield with icon-button to search
             TextField(
                 value = inputText,
@@ -152,6 +137,7 @@ fun SearchScreen(
 
             //2) Drawing the list with cities
             CityListView(context = context, query = query, onCitySelected = onCitySelected)
+            }
         }
     }
 }
@@ -193,7 +179,7 @@ fun CityListView(
             NewCityCard(context = context, city = city) {
                 onCitySelected(city.cityName)
             }
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
     //2. Show saved cities
@@ -238,7 +224,7 @@ fun NewCityCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(100.dp)
+            .height(80.dp)
             .clickable {
                 CityList.addCity(context, city)               //  Add city to saved list
                 onCitySelected(city.cityName)                 //  Notify NavHost
@@ -247,13 +233,12 @@ fun NewCityCard(
         colors = CardDefaults.cardColors(containerColor = Color.DarkGray)
     ) {
         Column(
-            verticalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.weight(1f).padding(16.dp)
         ) {
             Text(
                 text = city.cityName,
                 style = MaterialTheme.typography.bodyMedium,
-                fontSize = 25.sp,
+                fontSize = 20.sp,
                 color = Color.White
             )
 
@@ -262,10 +247,10 @@ fun NewCityCard(
             Text(
                 text = city.state + ", " + city.country,
                 style = MaterialTheme.typography.bodyMedium,
-                fontSize = 20.sp,
+                fontSize = 13.sp,
                 color = Color.LightGray
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(4.dp))
         }
     }
 }
@@ -291,7 +276,6 @@ fun CityCard(    city: City,
         // all content in a row
         Row(
             modifier = Modifier
-                .fillMaxSize()
                 .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ){
@@ -317,12 +301,14 @@ fun CityCard(    city: City,
             Column(
                 verticalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.weight(1f)
+
             ) {
                     //Cityname
                     Text(
                         text = city.cityName,
                         style = MaterialTheme.typography.bodyMedium,
                         fontSize = 22.sp,
+                        maxLines = 1,
                         color = Color.White
                     )
 
