@@ -72,10 +72,7 @@ fun AppNavHost(startDestination: String) {
                 type = NavType.StringType
             })
         ) { backStackEntry -> val city = backStackEntry.arguments?.getString("cityName") ?: ""
-            WeatherScreen(
-                city,
-                onBack   = { navController.navigate("search") }  // zurück zur SearchScreen
-            )
+            WeatherScreen(city, onBack   = { navController.navigate("search")}) // zurück zur SearchScreen
         }
     }
 }

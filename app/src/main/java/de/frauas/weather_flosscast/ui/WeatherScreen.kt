@@ -1,5 +1,7 @@
 package de.frauas.weather_flosscast.ui
 
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,6 +15,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,11 +27,15 @@ import androidx.compose.ui.unit.sp
 import de.frauas.weather_flosscast.R
 import com.airbnb.lottie.compose.*
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
 import de.frauas.weather_flosscast.City
+import de.frauas.weather_flosscast.CityList
 import de.frauas.weather_flosscast.Forecast
 import de.frauas.weather_flosscast.getCitySearchResults
 import de.frauas.weather_flosscast.getForecastFromCacheOrDownload
@@ -74,16 +81,36 @@ private fun colorForBackground(condition: String): Color {
 //einstellen hintergrund und name
 val bgC = colorForBackground("regen")
 //val cityName = "Offenbach"
-
 // -----------------------------------------------------------------------------
 // Screen complete
 // -----------------------------------------------------------------------------
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WeatherScreen(cityname : String, onBack: () -> Unit) {
-    val cityname = cityname
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val filesDir = LocalContext.current.filesDir
+fun WeatherScreen(cityName : String, onBack: () -> Unit) {
+    val context = LocalContext.current  // Safe save for app context for Compose
+
+    val city = CityList.getCities(context).find { it.cityName == cityName } //Getting cityData from CityList with find function
+    var forecast by remember { mutableStateOf<Forecast?>(null) }            //Stores the forecast state and recomposition when updated
+
+    //Getting forecast data for city that was handed over to WeatherScreen/////////////////////////////////////////
+    LaunchedEffect(cityName) {
+        if (city != null) {
+            forecast =
+                getForecastFromCacheOrDownload(context.filesDir, city.latitude, city.longitude)
+
+        }
+        if (city == null) {
+            Toast.makeText(context, "Fehler, die Stadt exisitert nicht!", Toast.LENGTH_SHORT).show()  //if the city variable is empty -> info and go back to searchScreen
+            onBack()
+        }
+    }
+
+        val currentForecast: Forecast = forecast ?: return  //currentForecast can not be empty, if empty return
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    val lifecycleOwner = LocalLifecycleOwner.current    //Debugging
+    val filesDir = LocalContext.current.filesDir        //Debugging
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(bgC),
@@ -93,7 +120,7 @@ fun WeatherScreen(cityname : String, onBack: () -> Unit) {
         // 1) Header with Lottie-animation
         item {
             Spacer(modifier = Modifier.height(16.dp))
-            WeatherHeader(cityname,onBack)
+            WeatherHeader(cityName, currentForecast, onBack)
         }
 
         // 2) hourly forecast
@@ -138,7 +165,7 @@ fun WeatherScreen(cityname : String, onBack: () -> Unit) {
 //Header
 // -----------------------------------------------------------------------------
 @Composable
- fun WeatherHeader(cityName: String,onBack:   () -> Unit) {
+ fun WeatherHeader(cityName : String, forecast: Forecast, onBack:   () -> Unit) {
     Box(modifier = Modifier.fillMaxWidth().height(200.dp).background(bgC)) {
 
         Row(modifier = Modifier.fillMaxSize().padding(start = 32.dp),
@@ -153,7 +180,7 @@ fun WeatherScreen(cityname : String, onBack: () -> Unit) {
                         //.padding(end = 32.dp)
                 )*/
             //Lottie-animation
-            val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.gewitter))
+            val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.sonne))
             val progress by animateLottieCompositionAsState(composition, iterations = LottieConstants.IterateForever)
             LottieAnimation(composition = composition, progress = { progress }, modifier = Modifier.size(100.dp))
 
@@ -174,7 +201,7 @@ fun WeatherScreen(cityname : String, onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(// Temperatur
-                    text = "23°", // Hier kannst du den echten Wert einsetzen
+                    text = "${forecast.getCurrentTemperature()}" + "°", // Hier kannst du den echten Wert einsetzen
                     color = Color.White,
                     fontSize = 64.sp,
                 )
@@ -182,7 +209,7 @@ fun WeatherScreen(cityname : String, onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(// Zustand und High/Low
-                    text = "Sonnig  25°/16°",
+                    text = "${forecast.days.firstOrNull()?.hourlyValues?.firstOrNull()?.weatherCode}  " + "${getDailyMaxTemp(forecast)}° / " + "${getDailyMinTemp(forecast)}°",
                     color = Color.White,
                     fontSize = 20.sp
                 )
@@ -557,5 +584,5 @@ fun SevenDayForecastBlock() {
 @Preview(showBackground = true)
 @Composable
 fun WeatherScreenPreview() {
-    WeatherScreen(cityname = "Offenbach", onBack = {})
+    WeatherScreen("Offenbach am Main", onBack = {})
 }

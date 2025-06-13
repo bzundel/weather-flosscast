@@ -106,9 +106,8 @@ fun getIconForWmoCode(code: Int, isNight: Boolean): Int {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchScreen(
-    onCitySelected: (String) -> Unit,
-) {
+fun SearchScreen(onCitySelected: (String) -> Unit,) {
+
     val context = LocalContext.current  // Safe save for app context for Compose
     var inputText by remember { mutableStateOf("") }    //updates directly
     var query by remember { mutableStateOf("") } // updates only after clicking
@@ -284,7 +283,7 @@ fun NewCityCard(
             modifier = Modifier.weight(1f).padding(16.dp)
         ) {
             Text(
-                text = city.cityName,
+                text = city.cityName,   //Cityname on the cards with new cities
                 style = MaterialTheme.typography.bodyMedium,
                 fontSize = 20.sp,
                 color = Color.White
@@ -293,7 +292,7 @@ fun NewCityCard(
             Spacer(modifier = Modifier.width(3.dp))
 
             Text(
-                text = city.state + ", " + city.country,
+                text = city.state + ", " + city.country,    //more data like the state and country
                 style = MaterialTheme.typography.bodyMedium,
                 fontSize = 13.sp,
                 color = Color.LightGray
@@ -419,8 +418,7 @@ fun CityCard(    city: City,
 
                     /*text = "${forecast?.days?.!!!firstOrNull()!!!?.hourlyValues?.maxOfOrNull { it.temperature }?.roundToInt() ?: "--"}°" +//MIN Max only for last day and last hour, so it is wrong!
                             "/${forecast?.days?.!!!firstOrNull()?!!!.hourlyValues?.minOfOrNull { it.temperature }?.roundToInt() ?: "--"}°",*/
-                    text = "${getDailyMinTemp(forecast).roundToInt() ?: "--"}°"
-                    + "/${getDailyMaxTemp(forecast).roundToInt() ?: "--"}°",
+                    text = "${getDailyMaxTemp(forecast)}°" + "°" + "${getDailyMinTemp(forecast)}°",
                     style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.8f))
                 )
             }
@@ -437,8 +435,8 @@ fun Forecast.getCurrentTemperature(): Int? {//Utility function to update newest 
 
     return todayForecast.hourlyValues.firstOrNull { it.dateTime.hour == currentHour }?.temperature?.roundToInt()
 }
-fun getDailyMinTemp(forecast: Forecast?): Double {
-    if (forecast == null) return 0.0
+fun getDailyMinTemp(forecast: Forecast?): Int {
+    if (forecast == null) return 0
 
     val allTemps = mutableListOf<Double>()
 
@@ -446,10 +444,10 @@ fun getDailyMinTemp(forecast: Forecast?): Double {
         // add all temps to the list
         allTemps.addAll(daily.hourlyValues.map { it.temperature })
     }
-    return allTemps.minOrNull() ?: 0.0
+    return allTemps.minOrNull()?.roundToInt() ?: 0
 }
-fun getDailyMaxTemp(forecast: Forecast?): Double {
-    if (forecast == null) return 0.0
+fun getDailyMaxTemp(forecast: Forecast?): Int {
+    if (forecast == null) return 0
 
     val allTemps = mutableListOf<Double>()
 
@@ -457,7 +455,7 @@ fun getDailyMaxTemp(forecast: Forecast?): Double {
         // add all temps to the list
         allTemps.addAll(daily.hourlyValues.map { it.temperature })
     }
-    return allTemps.maxOrNull() ?: 0.0
+    return allTemps.maxOrNull()?.roundToInt() ?: 0
 }
 
 @Preview(showBackground = true)
