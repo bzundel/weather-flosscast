@@ -2,6 +2,7 @@ package de.frauas.weather_flosscast.ui
 
 import android.content.Context
 import android.widget.Toast
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -43,10 +44,11 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalTime
 import kotlinx.datetime.toLocalDateTime
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
-//function for select the card-color
+//function for select the card-color old version
 private fun colorForCondition(condition: String): Color {
     return when (condition.lowercase()) {
         "regen", "regnerisch", "niesel" -> Color(0xFF808080)   // Dunkelgrau
@@ -55,6 +57,52 @@ private fun colorForCondition(condition: String): Color {
         else                               -> Color(0xFF546E7A)   //
     }
 }
+private fun colorForCityCard(code: Int): Color {
+    return when (code) {
+        in 0..3   -> Color(0xFF33AAFF)   // sonnig
+        in 4..9   -> Color(0xFF546E7A)   // Wolken/Nebel
+        in 10..19 -> Color(0xFF546E7A)   // Fog/Lightning etc.
+        in 20..29 -> Color(0xFF808080)   // vergangene Niederschläge
+        in 30..39 -> Color(0xFF546E7A)   // Staub/Sand/Schneewehen
+        in 40..49 -> Color(0xFF546E7A)   // Fog jetzt
+        in 50..59 -> Color(0xFF808080)   // Nieselregen
+        in 60..69 -> Color(0xFF808080)   // Regen
+        in 70..79 -> Color(0xFFB0BEC5)   // Schnee
+        in 80..89 -> Color(0xFF808080)   // Schauer
+        in 90..99 -> Color(0xFF37474F)   // Gewitter/Tornado
+        else      -> Color(0xFF546E7A)   // Fallback
+    }
+}
+
+@DrawableRes
+fun getIconForWmoCode(code: Int, isNight: Boolean): Int {
+    return if (isNight) {
+        when (code) {
+            in 0..3                             -> R.drawable.monn
+            in 4..5, 10                         -> R.drawable.monn
+            in 20..23, in 30..34                -> R.drawable.monn
+            in 50..53, in 60..63, in 80..84     -> R.drawable.monn
+            in 54..56, in 64..68, in 74..76     -> R.drawable.monn
+            in 70..73, in 85..87                -> R.drawable.monn
+            in 90..96, 99                       -> R.drawable.monn
+            else                                -> R.drawable.monn
+        }
+    } else {
+        when (code) {
+            in 0..3                             -> R.drawable.sun
+            in 4..5, 10                         -> R.drawable.cloud_sun
+            in 20..23, in 30..34                -> R.drawable.cloud
+            in 50..53, in 60..63, in 80..84     -> R.drawable.rain
+            in 54..56, in 64..68, in 74..76     -> R.drawable.snowrain
+            in 70..73, in 85..87                -> R.drawable.snow
+            in 90..96, 99                       -> R.drawable.storm
+            else                                -> R.drawable.cloud
+        }
+    }
+}
+
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -262,7 +310,7 @@ fun CityCard(    city: City,
                  onClick: () -> Unit
 ) {
     // Hintergrundfarbe je nach Wetterbedingung
-    val bgColor = colorForCondition("regen"/*city.condition*/)
+    val bgColor = colorForCityCard(forecast?.days?.firstOrNull()?.hourlyValues?.firstOrNull()?.weatherCode ?: 0)
 
     Card(
         shape = RoundedCornerShape(15.dp),
@@ -280,12 +328,35 @@ fun CityCard(    city: City,
             verticalAlignment = Alignment.CenterVertically
         ){
             //Icon of current condition
-            val iconRes = when ("regen"/*city.condition.lowercase()*/) {
+            /*val iconRes = when ("regen"/*city.condition.lowercase()*/) {
                 "sonnig", "klar", "heiter"       -> R.drawable.sun
                 "regen", "regnerisch", "niesel"  -> R.drawable.rain
                 "schnee", "schneeschauer"        -> R.drawable.snow
                 else                              -> null
+            }*/
+            val today      = forecast?.days?.firstOrNull()
+            val rawSunrise = today?.sunrise   // String? LocalDateTime? wir checken beides
+            val rawSunset  = today?.sunset
+            // 2) Normalisieren auf LocalDateTime
+            val formatter  = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+            val sunriseLdt = when (rawSunrise) {
+                is String          -> LocalDateTime.parse(rawSunrise, formatter)
+                is LocalDateTime   -> rawSunrise
+                else               -> null
             }
+            val sunsetLdt  = when (rawSunset) {
+                is String          -> LocalDateTime.parse(rawSunset, formatter)
+                is LocalDateTime   -> rawSunset
+                else               -> null
+            }
+            val now       = LocalDateTime.now()
+            val isNight   = if (sunriseLdt != null && sunsetLdt != null) {
+                now.isBefore(sunriseLdt) || now.isAfter(sunsetLdt)
+            } else {
+                false
+            }
+            val wmoCode   = today?.hourlyValues?.firstOrNull()?.weatherCode ?: 0
+            val iconRes   = getIconForWmoCode(wmoCode, isNight)
 
             if (iconRes != null) {
                 Image(
