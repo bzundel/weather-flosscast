@@ -3,6 +3,7 @@ package de.frauas.weather_flosscast.ui
 import android.content.Context
 import android.widget.Toast
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -24,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -32,7 +34,9 @@ import de.frauas.weather_flosscast.R
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextButton
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import de.frauas.weather_flosscast.City
@@ -47,7 +51,11 @@ import kotlinx.datetime.toLocalDateTime
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
-
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -57,6 +65,12 @@ fun SearchScreen(onCitySelected: (String) -> Unit,) {
     val context = LocalContext.current  // Safe save for app context for Compose
     var inputText by remember { mutableStateOf("") }    //updates directly
     var query by remember { mutableStateOf("") } // updates only after clicking
+
+
+    // 1) Pull-to-Refresh state
+    var isRefreshing by remember { mutableStateOf(false) }
+    val scope      = rememberCoroutineScope()
+    val swipeState = rememberSwipeRefreshState(isRefreshing)
 
     //Layout
     Scaffold(
@@ -77,13 +91,40 @@ fun SearchScreen(onCitySelected: (String) -> Unit,) {
         modifier = Modifier.background(Color.Black)  // background = schwarz
     ) {
         paddingValues ->
-    //Layout searchfield + list
-        LazyColumn(
+
+        SwipeRefresh(
+            state     = swipeState,
+            onRefresh = {
+                scope.launch {
+                    isRefreshing = true
+                    // Test-Delay – später hier echte Lade-/Such-Logik einsetzen
+                    Toast.makeText(context, "'Test'", Toast.LENGTH_SHORT).show()
+                    delay(1000)
+                    isRefreshing = false
+                }
+            },
+            indicator = { state, trigger ->
+                SwipeRefreshIndicator(
+                    state                   = state,
+                    refreshTriggerDistance  = trigger,
+                    backgroundColor         = Color.DarkGray,
+                    contentColor            = Color.White
+                )
+            },
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black)
                 .padding(paddingValues)
-                .padding(16.dp)
+        ) {
+
+
+        //Layout searchfield + list
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                //.padding(paddingValues)
+                .padding(horizontal = 16.dp)
         ) {
             item {
             // 1) searchfield with icon-button to search
@@ -130,12 +171,14 @@ fun SearchScreen(onCitySelected: (String) -> Unit,) {
 
             //2) Drawing the list with cities
             CityListView(context = context, query = query, onCitySelected = onCitySelected)
+
             }
+        }
         }
     }
 }
 
-
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CityListView(
     context: Context,
@@ -180,6 +223,8 @@ fun CityListView(
     val savedCities = CityList.getCities(context).filter { it.cityName.contains(query, ignoreCase = true) }
     var forecasts by remember { mutableStateOf<Map<String, Forecast>>(emptyMap()) }
 
+    var cityToDelete by remember { mutableStateOf<City?>(null) }//new
+
     LaunchedEffect(savedCities) {
         val result = mutableMapOf<String, Forecast>()
         for (city in savedCities) {
@@ -192,12 +237,41 @@ fun CityListView(
         }
         forecasts = result
     }
+    //For longclick if value not empty them show alertdialog
+    if (cityToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { cityToDelete = null },
+            //title            = { Text("Stadt  löschen?")  },
+            title            = { Text("${cityToDelete!!.cityName} wirklich löschen?") },
+            //text             = { Text("„${cityToDelete!!.cityName}“ wirklich löschen?") },
+            confirmButton    = {
+                TextButton(onClick = {
+                    //delete city obj in list
+                },) { Text("Löschen") }
+            },
+            dismissButton    = {
+                TextButton(onClick = { cityToDelete = null }) { Text("Abbrechen") }
+            }
+        )
+    }
 
     Column {
-        savedCities.forEach { city ->
-            val forecast = forecasts[city.cityName]
-            CityCard(context, city, forecast = forecast) {
-                onCitySelected(city.cityName)
+        savedCities.forEach { city -> val forecast = forecasts[city.cityName]
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .combinedClickable(
+                        onClick = { onCitySelected(city.cityName) },
+                        onLongClick = { cityToDelete = city }
+                    )
+            ) {
+                CityCard(
+                    context,
+                    city     = city,
+                    forecast = forecast,
+                    modifier = Modifier     // CityCard nimmt jetzt nur modifier
+                )
             }
             Spacer(modifier = Modifier.height(12.dp))
         }
@@ -251,10 +325,12 @@ fun NewCityCard(
 
 //Cards for the citys
 @Composable
-fun CityCard(   context : Context,
-                city: City,
-                 forecast: Forecast?, // nullable
-                onCitySelected: (String) -> Unit
+fun CityCard(
+    context: Context,
+    city: City,
+    forecast: Forecast?, // nullable
+    modifier: Modifier = Modifier,
+
 ) {
 
     // Prüfung isNight?//
@@ -279,13 +355,10 @@ fun CityCard(   context : Context,
     Card(
         shape = RoundedCornerShape(15.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .height(100.dp)
-            .clickable{
-                CityList.addCity(context, city)               //  Add city to saved list after clicking on the card
-                onCitySelected(city.cityName)                 //  Notify NavHost to show following city
-                      },
+            .height(100.dp),
+
         colors = CardDefaults.cardColors(containerColor = bgColor)
     ) {
         // all content in a row

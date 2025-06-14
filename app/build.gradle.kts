@@ -47,6 +47,7 @@ android {
 }
 
 dependencies {
+    implementation ("com.google.accompanist:accompanist-swiperefresh:0.31.5-beta")
     implementation("com.airbnb.android:lottie-compose:6.0.0")
     implementation("androidx.compose.material:material-icons-extended:1.5.0")
     implementation(libs.androidx.core.ktx)
