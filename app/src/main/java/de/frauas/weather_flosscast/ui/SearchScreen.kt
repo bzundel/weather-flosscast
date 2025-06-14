@@ -194,8 +194,7 @@ fun CityListView(
             searchResults = emptyList() // Liste vor dem Laden leeren
             try {
                 val cities = getCitySearchResults(query)
-                searchResults = cities
-
+                searchResults = cities.distinctBy { listOf(it.cityName, it.state, it.country) } //Save only those cities which have same name, state, country so there is no redundancy is being shown when searching cities (needs updates in the future, not perfect way to do it)
 
                 /*// API-Test
                 cities.forEach { city ->
@@ -246,7 +245,8 @@ fun CityListView(
             //text             = { Text("„${cityToDelete!!.cityName}“ wirklich löschen?") },
             confirmButton    = {
                 TextButton(onClick = {
-                    //delete city obj in list
+                    CityList.removeCity(context, cityToDelete!!)
+                    cityToDelete = null
                 },) { Text("Löschen") }
             },
             dismissButton    = {

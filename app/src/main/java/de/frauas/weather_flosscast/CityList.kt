@@ -56,18 +56,17 @@ object CityList {
         val currentList = getCities(context).toMutableList()
 
         // Check if the city already exists by name
-        val existingIndex = currentList.indexOfFirst { it.cityName == newCity.cityName }
-
-        if (existingIndex >= 0) {
+        if (currentList.contains(newCity)) {
             //Toast.makeText(context, "Ort '${newCity.cityName}' existiert bereits.", Toast.LENGTH_SHORT).show() //User notification --> Debugging
 
             // Replace existing city with updated data
-            currentList.removeAt(existingIndex) //Changing the index of the city to 0 so that will be shown as first on the list
-            currentList.add(0, newCity)
+            currentList.removeAt(currentList.indexOf(newCity)) //Changing the index of the city to 0 so that will be shown as first on the list
+            currentList.add(0, newCity)         //Adding the city at index 0 so it will be showed first
 
         } else {
             // If more than 25, remove the oldest city
-            if (currentList.size >= 25) {
+            if (currentList.size >= 30) {   //if the list is too long, remove last city on the list
+                Toast.makeText(context, "Ort '${currentList.last().cityName}' geloescht. Liste zu lang.", Toast.LENGTH_SHORT).show() //User notification
                 currentList.removeLast()
             }
             currentList.add(0, newCity) // Add new city to the end
@@ -81,14 +80,15 @@ object CityList {
      * Removes a city from the list by its name.
      * If the city is not found, the list remains unchanged.
      */
-    fun removeCityByName(context: Context, cityName: String) {
+    fun removeCity(context: Context, city: City) {
         val currentList = getCities(context).toMutableList()
 
         // Remove the city with the matching name
-        val updatedList = currentList.filter { it.cityName != cityName }
-
+        if (currentList.contains(city)) {
+            currentList.removeAt(currentList.indexOf(city)) //Removing city from the list
+        }else Toast.makeText(context, "Fehler, Stadt nicht auf der Liste!", Toast.LENGTH_SHORT).show() //User notification
         // Save the updated list back to SharedPreferences
-        saveCities(context, updatedList)
+        saveCities(context, currentList)
     }
 
     /**
