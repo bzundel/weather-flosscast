@@ -59,7 +59,7 @@ object CityList {
         val existingIndex = currentList.indexOfFirst { it.cityName == newCity.cityName }
 
         if (existingIndex >= 0) {
-            Toast.makeText(context, "Ort '${newCity.cityName}' existiert bereits.", Toast.LENGTH_SHORT).show() //User notification
+            //Toast.makeText(context, "Ort '${newCity.cityName}' existiert bereits.", Toast.LENGTH_SHORT).show() //User notification --> Debugging
 
             // Replace existing city with updated data
             currentList.removeAt(existingIndex) //Changing the index of the city to 0 so that will be shown as first on the list

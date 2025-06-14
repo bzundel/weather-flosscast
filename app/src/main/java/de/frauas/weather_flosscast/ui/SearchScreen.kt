@@ -169,7 +169,7 @@ fun CityListView(
 
     Column {
         searchResults.forEach { city ->
-            NewCityCard(context = context, city = city) {
+            NewCityCard(context, city) {
                 onCitySelected(city.cityName)
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -196,7 +196,7 @@ fun CityListView(
     Column {
         savedCities.forEach { city ->
             val forecast = forecasts[city.cityName]
-            CityCard(city = city, forecast = forecast) {
+            CityCard(context, city, forecast = forecast) {
                 onCitySelected(city.cityName)
             }
             Spacer(modifier = Modifier.height(12.dp))
@@ -219,6 +219,7 @@ fun NewCityCard(
             .fillMaxWidth()
             .height(80.dp)
             .clickable {
+                if(CityList.getCities(context).contains(city))Toast.makeText(context, "Ort '${city.cityName}' existiert bereits.", Toast.LENGTH_SHORT).show()
                 CityList.addCity(context, city)               //  Add city to saved list
                 onCitySelected(city.cityName)                 //  Notify NavHost
                 Toast.makeText(context, "${city.cityName} hinzugefügt", Toast.LENGTH_SHORT).show()
@@ -250,9 +251,10 @@ fun NewCityCard(
 
 //Cards for the citys
 @Composable
-fun CityCard(    city: City,
+fun CityCard(   context : Context,
+                city: City,
                  forecast: Forecast?, // nullable
-                 onClick: () -> Unit
+                onCitySelected: (String) -> Unit
 ) {
 
     // Prüfung isNight?//
@@ -280,7 +282,10 @@ fun CityCard(    city: City,
         modifier = Modifier
             .fillMaxWidth()
             .height(100.dp)
-            .clickable(onClick = onClick),
+            .clickable{
+                CityList.addCity(context, city)               //  Add city to saved list after clicking on the card
+                onCitySelected(city.cityName)                 //  Notify NavHost to show following city
+                      },
         colors = CardDefaults.cardColors(containerColor = bgColor)
     ) {
         // all content in a row
@@ -355,7 +360,7 @@ fun CityCard(    city: City,
 
                     /*text = "${forecast?.days?.!!!firstOrNull()!!!?.hourlyValues?.maxOfOrNull { it.temperature }?.roundToInt() ?: "--"}°" +//MIN Max only for last day and last hour, so it is wrong!
                             "/${forecast?.days?.!!!firstOrNull()?!!!.hourlyValues?.minOfOrNull { it.temperature }?.roundToInt() ?: "--"}°",*/
-                    text = "${getDailyMaxTemp(forecast)}°" + "°" + "${getDailyMinTemp(forecast)}°",
+                    text = "${getDailyMaxTemp(forecast)}°" + "/${getDailyMinTemp(forecast)}°",
                     style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.8f))
                 )
             }
