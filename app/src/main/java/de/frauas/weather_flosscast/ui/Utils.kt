@@ -184,6 +184,9 @@ fun getLottieResForWmoCode(code: Int, isNight: Boolean): Int {
     }
 }
 
+// -----------------------------------------------------------------------------
+// Functions for select the background-colour
+// -----------------------------------------------------------------------------
 
 
 /**

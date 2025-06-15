@@ -67,7 +67,7 @@ object CityList {
             // If more than 25, remove the oldest city
             if (currentList.size >= 30) {   //if the list is too long, remove last city on the list
                 Toast.makeText(context, "Ort '${currentList.last().cityName}' geloescht. Liste zu lang.", Toast.LENGTH_SHORT).show() //User notification
-                currentList.removeLast()
+                currentList.remove(newCity)
             }
             currentList.add(0, newCity) // Add new city to the end
         }
