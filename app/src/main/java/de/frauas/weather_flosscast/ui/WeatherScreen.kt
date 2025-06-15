@@ -95,7 +95,7 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
         onRefresh = {
             scope.launch {
                 isRefreshing = true
-                forecast = loadForecastsForCities(context, CityList.getCities(context))[cityName]
+                forecast = loadForecastsForCities(context, CityList.getCities(context),true)[cityName]
                 Toast.makeText(context, "Daten aktualisiert", Toast.LENGTH_SHORT).show()
                 delay(1000)
                 isRefreshing = false
@@ -135,28 +135,7 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
         item {
             InfoBoxesSection(forecast)
         }
-
-        // button for debugging
-        item {
-            Spacer(modifier = Modifier.height(32.dp))
-            Button(
-                onClick = {
-                    lifecycleOwner.lifecycleScope.launch {
-                        val forecast: Forecast = getForecastFromCacheOrDownload(filesDir, 50.1, 8.6)
-                        val matches: List<City> = getCitySearchResults("Frankfurt")
-
-                        val dummy = Unit
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-            ) {
-                Text("Get forecast")
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-    }}
+    } }
 }
 
 // -----------------------------------------------------------------------------
@@ -264,8 +243,7 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
 // -----------------------------------------------------------------------------
 @Composable
 fun HourlyItem(forecast : Forecast?, hour : Int) {
-    // Jede Stunde nur als Text, ohne extra Card-Hintergrund
-    val HourlyData = forecast?.getHourlyData(hour)
+    val HourlyData = forecast?.getHourlyData(hour)// het the data of the hour
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -277,7 +255,6 @@ fun HourlyItem(forecast : Forecast?, hour : Int) {
             style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
         )
         Spacer(modifier = Modifier.height(17.dp))
-
 
         val (wmoCode, isNight) = forecast!!.getWmoCodeAndIsNight()
         val iconRes = getIconForWmoCode(wmoCode, isNight)
@@ -347,244 +324,181 @@ fun SevenDayForecastBlock(forecast : Forecast?) {
 // -----------------------------------------------------------------------------
 @Composable
 fun DailyItem(forecast: Forecast?, day : Int) {
-    //Getting needed data with a function
-    val DailyData = forecast?.getDailyData(day)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    val DailyData = forecast?.getDailyData(day)//Getting needed data with a function
+
+    //All days in a seperate Row
+    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+
+        // 1) Day-Label on DailyItem
         Text(
-            text = DailyData?.dayLabel ?: "Fehler",          //Day-Label on DailyItem
+            text = DailyData?.dayLabel ?: "Fehler",
             style = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1.5f)
         )
+        Spacer(modifier = Modifier.width(10.dp))//Spacer between Day-label and rain prob
 
-        /////////////////////////rain probability icon//////////////////////
-        Spacer(modifier = Modifier.width(16.dp))
-        Image(
-            painter = painterResource(id = R.drawable.dropp),//weatherIconResForCode(weatherCode)
-            contentDescription = "",
-            modifier = Modifier.size(10.dp)
-        )
-        Text(
-            text = " " + DailyData?.rain.toString() + " %",     //Rain probability
-            style = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
-            modifier = Modifier.weight(1f)
-        )
-        Spacer(modifier = Modifier.width(30.dp))
+        // 2) Rain probability and drop icon in a row
+        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically,) {
+            Image(
+                painter = painterResource(id = R.drawable.dropp),//weatherIconResForCode(weatherCode)
+                contentDescription = "",
+                modifier = Modifier.size(10.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = " " + DailyData?.rain.toString() + " %",     //Rain probability
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
+                modifier = Modifier.weight(1f)
+            )
+        }
+        Spacer(modifier = Modifier.width(25.dp))//Spacer between rain prob and image
 
-        val (wmoCode, isNight) = forecast!!.getWmoCodeAndIsNight()
-        val iconRes = getIconForWmoCode(wmoCode, isNight)
+        // 3) Wetter-Icon in a box
+        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+            val (wmoCode, isNight) = forecast!!.getWmoCodeAndIsNight()
+            val iconRes = getIconForWmoCode(wmoCode, isNight)
+            Image(
+                painter = painterResource(id = iconRes),//weatherIconResForCode(weatherCode) ICON
+                contentDescription = "",
+                modifier = Modifier.size(25.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(25.dp))//Spacer between icon and high temperature
 
-        Image(
-            painter = painterResource(id = iconRes),//weatherIconResForCode(weatherCode) ICON
-            contentDescription = "",
-            modifier = Modifier.size(25.dp)
-        )
-        Spacer(modifier = Modifier.width(40.dp))
+        // 4) Arrow up image + highest temperature in a row
+        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically,) {
+            Image(
+                painter = painterResource(id = R.drawable.up),//weatherIconResForCode(weatherCode)  ICON
+                contentDescription = "",
+                modifier = Modifier.size(25.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = DailyData?.max.toString() + "°",
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
+            )
+        }
 
-        Image(
-            painter = painterResource(id = R.drawable.up),//weatherIconResForCode(weatherCode)  ICON
-            contentDescription = "",
-            modifier = Modifier.size(25.dp)
-        )
-
-        Text(
-            text = DailyData?.max.toString() + "°",
-            style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
-        )
-
-        Image(
-            painter = painterResource(id = R.drawable.down),//weatherIconResForCode(weatherCode)
-            contentDescription = "",
-            modifier = Modifier.size(25.dp)
-        )
-
-        //Spacer(modifier = Modifier.width(29.dp))
-        Text(
-            text = DailyData?.min.toString() + "°",
-            style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
-        )
+        // 5) Arrow down image + lowest temperature in a row
+        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+            Image(
+                painter = painterResource(id = R.drawable.down),//weatherIconResForCode(weatherCode)
+                contentDescription = "",
+                modifier = Modifier.size(25.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = DailyData?.min.toString() + "°",
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
+            )
+        }
     }
 }
+
 
 // -----------------------------------------------------------------------------
 //info-boxes
 // -----------------------------------------------------------------------------
-    @Composable
-    fun InfoBoxesSection(forecast: Forecast?) {
-        Spacer(modifier = Modifier.height(16.dp))
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Box 1: UV-INDEX
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(120.dp)
-                    .clip(RoundedCornerShape(12.dp))
-            ) {
-                // Die halbtransparente, dunkle Überlagerung
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .background(Color.Black.copy(alpha = 0.15f))
-                )
-                // Dein Content darüber
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    //verticalArrangement = Arrangement.SpaceBetween
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Luftfeuchtigkeit",
-                        style = MaterialTheme.typography.titleSmall.copy(color = Color.White)
-                    )
-                    Text(
-                        text = forecast?.days?.firstOrNull()?.hourlyValues?.firstOrNull()?.relativeHumidity.toString() + " %",
-                        style = MaterialTheme.typography.displaySmall.copy(color = Color.White)
-                    )
-                }
-            }
+@Composable
+fun InfoBoxesSection(forecast: Forecast?) {
+    Spacer(modifier = Modifier.height(16.dp))
 
-            // Box 2: Niederschlag
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(120.dp)
-                    .clip(RoundedCornerShape(12.dp))
+    //First row of the Boxes
+    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+
+        // Box 1: Humidity
+        Box(modifier = Modifier.weight(1f).height(120.dp).clip(RoundedCornerShape(12.dp))) {
+            // Box for background
+            Box(modifier = Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.15f)))
+            Column(
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Halbtransparente, dunkle Überlagerung
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .background(Color.Black.copy(alpha = 0.15f))
+                Text(//Heading
+                    text = "Luftfeuchtigkeit",
+                    style = MaterialTheme.typography.titleSmall.copy(color = Color.White)
                 )
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Niederschlag heute",
-                        style = MaterialTheme.typography.titleSmall.copy(color = Color.White)
-                    )
-                    Text(
-                        text = forecast?.days?.firstOrNull()?.hourlyValues?.maxOfOrNull { it.rain }?.roundToInt().toString() + " mm",
-                        style = MaterialTheme.typography.displaySmall.copy(color = Color.White)
-                    )
-                    Text(
-                        text = forecast?.days?.getOrNull(1)?.hourlyValues?.maxOfOrNull { it.rain }?.roundToInt().toString() + " mm morgen erwartet",
-                        style = MaterialTheme.typography.bodySmall.copy(color = Color.White)
-                    )
-                }
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(//Data
+                    text = forecast?.days?.firstOrNull()?.hourlyValues?.firstOrNull()?.relativeHumidity.toString() + " %",
+                    style = MaterialTheme.typography.displaySmall.copy(color = Color.White)
+                )
             }
         }
-        Spacer(modifier = Modifier.height(24.dp))
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Box 3: Wind
-           /* Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(120.dp)
-                    .clip(RoundedCornerShape(12.dp))
+        // Box 2: Rain probability
+        Box(modifier = Modifier.weight(1f).height(120.dp).clip(RoundedCornerShape(12.dp))) {
+            // Box for background
+            Box(modifier = Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.15f)))
+            Column(
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Die halbtransparente, dunkle Überlagerung
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .background(Color.Black.copy(alpha = 0.15f))
+                Text(//Heading
+                    text = "Niederschlag heute",
+                    style = MaterialTheme.typography.titleSmall.copy(color = Color.White)
                 )
-                // Dein Content darüber
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-
-                ) {
-                    Text(
-                        text = "Wind",
-                        style = MaterialTheme.typography.titleSmall.copy(color = Color.White)
-                    )
-                    Text(
-                        text = "6 km/h",
-                        style = MaterialTheme.typography.displaySmall.copy(color = Color.White)
-                    )
-                    Text(
-                        text = "Richtung SW",
-                        style = MaterialTheme.typography.bodySmall.copy(color = Color.White)
-                    )
-                }
-            }*/ //Can be used later
-
-            // Box 4:
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(120.dp)
-                    .clip(RoundedCornerShape(12.dp)),
-
-            ) {
-                // Halbtransparente, dunkle Überlagerung
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .background(Color.Black.copy(alpha = 0.15f))
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(//Data today
+                    text = forecast?.days?.firstOrNull()?.hourlyValues?.maxOfOrNull { it.rain }?.roundToInt().toString() + " mm",
+                    style = MaterialTheme.typography.displaySmall.copy(color = Color.White)
                 )
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-
-                    //verticalArrangement = Arrangement.SpaceBetween
-
-                ) {
-                    Text(
-                        text = "Regen-%",
-                        style = MaterialTheme.typography.titleSmall.copy(color = Color.White),
-
-                    )
-                    Text(
-                        text = "5%",
-                        style = MaterialTheme.typography.displaySmall.copy(color = Color.White)
-                    )
-                    Text(
-                        text = "morgen 7%",
-                        style = MaterialTheme.typography.bodySmall.copy(color = Color.White)
-                    )
-                }
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(//Data tomorrow
+                    text = forecast?.days?.getOrNull(1)?.hourlyValues?.maxOfOrNull { it.rain }?.roundToInt().toString() + " mm morgen erwartet",
+                    style = MaterialTheme.typography.bodySmall.copy(color = Color.White)
+                )
             }
         }
     }
+    Spacer(modifier = Modifier.height(24.dp))
 
+    //Second row of Boxes
+    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
 
+        // Box 3: Sunrise
+        Box(modifier = Modifier.weight(1f).height(120.dp).clip(RoundedCornerShape(12.dp))) {
+            // Box for background
+            Box(modifier = Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.15f)))
 
+            Column(
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(//Heading
+                    text = "Sonnenaufgang",
+                    style = MaterialTheme.typography.titleSmall.copy(color = Color.White)
+                )
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(//Data
+                    text = forecast?.days?.firstOrNull()?.sunrise?.time.toString(),
+                    style = MaterialTheme.typography.displaySmall.copy(color = Color.White)
+                )
+            }
+        }
 
-// -----------------------------------------------------------------------------
-//preview in android studio
-// -----------------------------------------------------------------------------
-@Preview(showBackground = true)
-@Composable
-fun WeatherScreenPreview() {
-    WeatherScreen("Offenbach am Main", onBack = {})
+        // Box 4: Sunset
+        Box(modifier = Modifier.weight(1f).height(120.dp).clip(RoundedCornerShape(12.dp)),) {
+            // Box for background
+            Box(modifier = Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.15f)))
+            Column(
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(//heading
+                    text = "Sonnenuntergang",
+                    style = MaterialTheme.typography.titleSmall.copy(color = Color.White),
+                    )
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(//Data
+                    text = forecast?.days?.firstOrNull()?.sunset?.time.toString(),
+                    style = MaterialTheme.typography.displaySmall.copy(color = Color.White)
+                )
+            }
+        }
+    }
 }
