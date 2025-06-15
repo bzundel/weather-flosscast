@@ -273,7 +273,7 @@ fun HourlyItem(forecast : Forecast?, hour : Int) {
             .wrapContentHeight()
     ) {
         Text(
-            text = HourlyData?.hour?.toString() + " Uhr",//hourly.hourLabel,
+            text = HourlyData?.hour?.toString() + " Uhr",//hourly.hourLabel,    //Uhrzeit auf der Hourly-Item Liste
             style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
         )
         Spacer(modifier = Modifier.height(17.dp))
@@ -284,14 +284,14 @@ fun HourlyItem(forecast : Forecast?, hour : Int) {
 
         // ADD IMAGE
         Image(
-            painter = painterResource(id = iconRes),
+            painter = painterResource(id = getIconForWmoCode(HourlyData?.state ?: 0, HourlyData?.isNight ?: false)),    //State Icon/Wetter-Icon
             contentDescription = "",
             modifier = Modifier.size(22.dp)
         )
 
         Spacer(modifier = Modifier.height(17.dp))
         Text(
-            text = "${HourlyData?.temp}°",
+            text = "${HourlyData?.temp}°",              //Temperatur
             style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
         )
     }
@@ -347,66 +347,74 @@ fun SevenDayForecastBlock(forecast : Forecast?) {
 // -----------------------------------------------------------------------------
 @Composable
 fun DailyItem(forecast: Forecast?, day : Int) {
-    //Getting needed data with a function
-    val DailyData = forecast?.getDailyData(day)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    val DailyData = forecast?.getDailyData(day)//Getting needed data with a function
+
+    //All days in a seperate Row
+    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+
+        // 1) Day-Label on DailyItem
         Text(
-            text = DailyData?.dayLabel ?: "Fehler",          //Day-Label on DailyItem
+            text = DailyData?.dayLabel ?: "Fehler",
             style = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1.5f)
         )
+        Spacer(modifier = Modifier.width(10.dp))//Spacer between Day-label and rain prob
 
-        /////////////////////////rain probability icon//////////////////////
-        Spacer(modifier = Modifier.width(16.dp))
-        Image(
-            painter = painterResource(id = R.drawable.dropp),//weatherIconResForCode(weatherCode)
-            contentDescription = "",
-            modifier = Modifier.size(10.dp)
-        )
-        Text(
-            text = " " + DailyData?.rain.toString() + " %",     //Rain probability
-            style = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
-            modifier = Modifier.weight(1f)
-        )
-        Spacer(modifier = Modifier.width(30.dp))
+        // 2) Rain probability and drop icon in a row
+        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically,) {
+            Image(
+                painter = painterResource(id = R.drawable.dropp),//weatherIconResForCode(weatherCode) Rain Icon
+                contentDescription = "",
+                modifier = Modifier.size(10.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = " " + DailyData?.rain.toString() + " %",     //Rain probability
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
+                modifier = Modifier.weight(1f)
+            )
+        }
+        Spacer(modifier = Modifier.width(25.dp))//Spacer between rain prob and image
 
-        val (wmoCode, isNight) = forecast!!.getWmoCodeAndIsNight()
-        val iconRes = getIconForWmoCode(wmoCode, isNight)
+        // 3) Wetter-Icon in a box
+        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+            val (wmoCode, isNight) = forecast!!.getWmoCodeAndIsNight()
+            val iconRes = getIconForWmoCode(wmoCode, isNight)
+            Image(
+                painter = painterResource(id = getIconForWmoCode(DailyData?.state ?: 0, false)),//weatherIconResForCode(weatherCode) ICON
+                contentDescription = "",
+                modifier = Modifier.size(25.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(25.dp))//Spacer between icon and high temperature
 
-        Image(
-            painter = painterResource(id = iconRes),//weatherIconResForCode(weatherCode) ICON
-            contentDescription = "",
-            modifier = Modifier.size(25.dp)
-        )
-        Spacer(modifier = Modifier.width(40.dp))
+        // 4) Arrow up image + highest temperature in a row
+        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically,) {
+            Image(
+                painter = painterResource(id = R.drawable.up),//weatherIconResForCode(weatherCode)  ICON
+                contentDescription = "",
+                modifier = Modifier.size(25.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = DailyData?.max.toString() + "°",
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
+            )
+        }
 
-        Image(
-            painter = painterResource(id = R.drawable.up),//weatherIconResForCode(weatherCode)  ICON
-            contentDescription = "",
-            modifier = Modifier.size(25.dp)
-        )
-
-        Text(
-            text = DailyData?.max.toString() + "°",
-            style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
-        )
-
-        Image(
-            painter = painterResource(id = R.drawable.down),//weatherIconResForCode(weatherCode)
-            contentDescription = "",
-            modifier = Modifier.size(25.dp)
-        )
-
-        //Spacer(modifier = Modifier.width(29.dp))
-        Text(
-            text = DailyData?.min.toString() + "°",
-            style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
-        )
+        // 5) Arrow down image + lowest temperature in a row
+        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+            Image(
+                painter = painterResource(id = R.drawable.down),//weatherIconResForCode(weatherCode)
+                contentDescription = "",
+                modifier = Modifier.size(25.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = DailyData?.min.toString() + "°",
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
+            )
+        }
     }
 }
 

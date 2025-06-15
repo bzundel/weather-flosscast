@@ -55,31 +55,32 @@ import kotlin.time.Duration.Companion.hours
         return allTemps.maxOrNull()?.roundToInt() ?: 0
     }
 
-data class HourlyData(val hour: Int, val state : Int, val temp: Int)//Dataconstruct for HourlyData
-fun Forecast.getHourlyData(hour: Int): HourlyData? {
-    val timeZone = TimeZone.currentSystemDefault()
+data class HourlyData(val hour: Int, val state : Int, val isNight : Boolean, val temp: Int)//Dataconstruct for HourlyData
+fun Forecast.getHourlyData(offsetHours: Int): HourlyData? {
+    val tz = TimeZone.currentSystemDefault()
+    val targetDt = Clock.System.now()
+        .plus(offsetHours.hours)
+        .toLocalDateTime(tz)        //Adding hours to the targetTimeZone. In Util function the forecast data will be different directly
 
-    // JNow-Timezone data
-    val nowInstant = Clock.System.now()
+    val today = days.firstOrNull { it.date == targetDt.date } ?: return null
+    val hourly = today.hourlyValues
+        .firstOrNull { it.dateTime.hour == targetDt.hour } ?: return null
 
-    // +hour adding for different data
-    val targetInstant = nowInstant.plus(hour.hours)
+    // Do not parse here, sunrise is already LocalDateTime
+    val sunrise: kotlinx.datetime.LocalDateTime = today.sunrise
+    val sunset:  kotlinx.datetime.LocalDateTime = today.sunset
 
-    // Converting to local data
-    val targetDateTime = targetInstant.toLocalDateTime(timeZone)
-
-    // Setting today as val
-    val targetDay = days.firstOrNull { it.date == targetDateTime.date } ?: return null
-
-    // Setting hour as val
-    val hourly = targetDay.hourlyValues.firstOrNull { it.dateTime.hour == targetDateTime.hour } ?: return null
+    val isNight = targetDt < sunrise || targetDt > sunset
 
     return HourlyData(
-        hour = targetDateTime.hour, //Taking the right values from set values
-        state = hourly.weatherCode,
-        temp = hourly.temperature.roundToInt()
+        hour    = targetDt.hour,
+        state   = hourly.weatherCode,
+        isNight = isNight,
+        temp    = hourly.temperature.roundToInt()
     )
 }
+
+
 //Getting data for DailyItem List
 data class DailyData(val dayLabel : String, val state : Int, val rain : Int, val max: Int, val min: Int)
 fun Forecast.getDailyData(day: Int): DailyData {
@@ -98,18 +99,41 @@ fun Forecast.getDailyData(day: Int): DailyData {
         DayOfWeek.SUNDAY    -> "Sonntag"
     }
 
-    val weatherCode = targetDay.hourlyValues.firstOrNull()?.weatherCode ?: 0
-    val rainAmount = targetDay.hourlyValues.maxOfOrNull { it.precipitationProbability } ?: 0
+    val weatherCode = targetDay.hourlyValues.maxByOrNull { it.weatherCode }?.weatherCode ?: 0   //Takes worst weatherCode from forecast and puts it in return at the end
+    val rainProbability = targetDay.hourlyValues.maxOfOrNull { it.precipitationProbability } ?: 0
     val maxTemp = targetDay.hourlyValues.maxOfOrNull { it.temperature }?.roundToInt() ?: 0
     val minTemp = targetDay.hourlyValues.minOfOrNull { it.temperature }?.roundToInt() ?: 0
 
     return DailyData(
         dayLabel = weekdayLabel,
         state = weatherCode,
-        rain = rainAmount,
+        rain = rainProbability,
         max = maxTemp,
         min = minTemp
     )
+}
+
+/**
+ * Liest aus dem Forecast den WMO-Code der ersten Stunde und
+ * bestimmt, ob es gerade Nacht ist.
+ *
+ * @param forecast das Forecast-Objekt
+ * @return Pair( WMO-Code , isNight )
+ */
+fun Forecast.getWmoCodeAndIsNight(): Pair<Int, Boolean> {
+    // 1) Erstes Tages-Objekt
+    val today = days.firstOrNull() ?: return 0 to false
+
+    // 2) Tag/Nacht-Berechnung
+    val sunrise = LocalDateTime.parse(today.sunrise.toString())
+    val sunset  = LocalDateTime.parse(today.sunset.toString())
+    val now     = LocalDateTime.now()
+    val isNight = now.isBefore(sunrise) || now.isAfter(sunset)
+
+    // 3) WMO-Code der ersten Stunde (oder 0 fallback)
+    val wmoCode = today.hourlyValues.firstOrNull()?.weatherCode ?: 0
+
+    return wmoCode to isNight
 }
 
 /**
@@ -241,27 +265,3 @@ fun colorForWmoCode(weatherCode: Int, isNight: Boolean): Color {
         }
     }
 }
-
-/**
- * Liest aus dem Forecast den WMO-Code der ersten Stunde und
- * bestimmt, ob es gerade Nacht ist.
- *
- * @param forecast das Forecast-Objekt
- * @return Pair( WMO-Code , isNight )
- */
- fun Forecast.getWmoCodeAndIsNight(): Pair<Int, Boolean> {
-    // 1) Erstes Tages-Objekt
-    val today = days.firstOrNull() ?: return 0 to false
-
-    // 2) Tag/Nacht-Berechnung
-    val sunrise = LocalDateTime.parse(today.sunrise.toString())
-    val sunset  = LocalDateTime.parse(today.sunset.toString())
-    val now     = LocalDateTime.now()
-    val isNight = now.isBefore(sunrise) || now.isAfter(sunset)
-
-    // 3) WMO-Code der ersten Stunde (oder 0 fallback)
-    val wmoCode = today.hourlyValues.firstOrNull()?.weatherCode ?: 0
-
-    return wmoCode to isNight
-}
-
