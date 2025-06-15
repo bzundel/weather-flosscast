@@ -63,6 +63,483 @@
 
 \newpage
 
+\section{Product ownership \small{(Alwin Zimmermann)}}
+\subsection{Aufgaben des Product Owners}
+In der Rolle des Product Owners war es erforderlich, eine präzise Definition des Projekts zu formulieren. Von entscheidender Bedeutung war die Erstellung von Anforderungen sowie die Ausarbeitung der verschiedenen User-Stories . Das Produkt muss den Erwartungen der Stakeholder entsprechen. Die Pflege des Backlogs zählt ebenfalls zu den Aufgaben des Product Owners, um den Fortschritt des Projekts zu dokumentieren.
+
+\subsection{Probleme}
+Eine der größten Herausforderungen im Team bestand in der Organisation regelmäßiger Besprechungen. Obwohl unsere Stundenpläne und täglichen Abläufe variieren, haben wir es geschafft, uns in regelmäßigen Abständen zuverlässig zu treffen. Der Austausch mit dem Scrum Master erwies sich als äußerst nützlich, ebenso wie die Kooperation innerhalb des gesamten Entwicklerteams.
+
+\subsection{Ziel der Entwiklung}
+Das Ziel des Projekts bestand darin, eine Wetteranwendung für das Android-Betriebssystem zu entwickeln. Die Anforderungen bestanden darin, dass die Anwendung bestimmte Vorgaben erfüllt und den Erwartungen der Stakeholder gerecht wird.
+Im Folgenden werde ich auf die von uns erstellten Reqirements eingehen und die daraus resultierenden User-Stories erläutern.
+
+\subsection{Requirements}
+In diesem Teil gehe ich auf die Requirements ein. Diese beziehen sich auf die unten stehenden User-Stories. Die Kern-Requirements dienen als erste Anhaltspunkte, was der Product Owner verlangt und welche Kernfunktionalitäten wichtig sind.
+
+\subsection{Kernfunktionen (Hohe Priorität) \small{(Alwin Zimmermann)}}
+
+\subsubsection{Automatisches Anzeigen des aktuellen Wetters am Standort (US-001)}
+\begin{itemize}
+    \item Beim Start der App wird das aktuelle Wetter für den geografischen Standort des Nutzers automatisch und ohne manuelle Interaktion angezeigt.
+    \item Ziel ist es, dem Nutzer sofortige und präzise Informationen über seine unmittelbare Umgebung zu liefern.
+\end{itemize}
+
+\subsubsection{Städtesuche und -verwaltung (US-002, US-005)}
+\begin{itemize}
+    \item Nutzer müssen in der Lage sein, Städte zu suchen (z.B. über eine Suchleiste).
+    \item Gefundene Städte können einer personalisierten Favoritenliste hinzugefügt werden.
+    \item Das Wetter der in der Liste gespeicherten Städte muss abrufbar sein.
+    \item Nutzer müssen die Möglichkeit haben, Städte aus ihrer Favoritenliste zu entfernen, um die Ansicht zu optimieren.
+\end{itemize}
+
+\subsubsection{Wettervorhersage für zukünftige Tage (US-003, US-004)}
+\begin{itemize}
+    \item Die App muss eine Wettervorhersage für die kommenden Tage am aktuellen Standort des Nutzers anzeigen können.
+    \item Die App muss eine Wettervorhersage für die kommenden Tage der in der Favoritenliste gespeicherten Städte anzeigen können.
+    \item Ziel ist es, den Nutzer umfassend über zukünftige Wettersituationen zu informieren.
+\end{itemize}
+
+\subsection{Offline-Funktionalität (Mittlere Priorität)}
+
+\subsubsection{Offline-Zugriff auf das letzte Wetter am Standort (US-005)}
+\begin{itemize}
+    \item Wenn keine Internetverbindung besteht, soll die App die zuletzt abgerufenen Wetterdaten für den aktuellen Standort anzeigen.
+    \item Diese Funktion stellt sicher, dass der Nutzer auch ohne Internetverbindung grundlegende Informationen erhält.
+\end{itemize}
+
+\subsubsection{Offline-Zugriff auf das Wetter gespeicherter Städte (US-006)}
+\begin{itemize}
+    \item Die App muss die zuletzt abgerufenen Wetterdaten für die in der Favoritenliste gespeicherten Städte auch im Offline-Modus anzeigen können.
+    \item Die angezeigten Offline-Daten sollten nicht älter als das Ende des letzten verfügbaren Forecasts sein, um eine gewisse Relevanz zu gewährleisten.
+\end{itemize}
+
+\subsubsection{Fehlermeldung bei fehlender Internetverbindung (US-007)}
+\begin{itemize}
+    \item Bei fehlender oder unterbrochener Internetverbindung muss eine eindeutige Fehlermeldung angezeigt werden, die den Nutzer über den Offline-Status informiert.
+\end{itemize}
+
+\subsection{App-Informationen und Hilfe (Niedrige Priorität)}
+
+\subsubsection{Hilfefunktion und Impressum (US-008)}
+\begin{itemize}
+    \item Die App soll eine Hilfefunktion bereitstellen, die dem Nutzer die Bedienung der App erklärt.
+    \item Dieser Bereich muss auch ein Impressum enthalten, das Informationen über den Entwickler und die Lizenz der App bereitstellt.
+\end{itemize}
+
+\subsection{User-Stories}
+In diesem teil sammele und beschreibe ich die User Stories für das Projekt \textbf{Weather-flosscast}. Jede User Story repräsentiert eine Anforderung aus der Perspektive eines Benutzers und dient als Grundlage für die Entwicklung und Schätzung.
+
+\subsubsection{Übersicht der User Stories}
+Um eine klare Übersicht zu gewährleisten, sind die wichtigsten Metadaten der User Stories in der folgenden Tabelle zusammengefasst. Detaillierte Beschreibungen und Akzeptanzkriterien finden sich in den nachfolgenden Abschnitten.
+
+\setlength{\LTpre}{0pt} % Kein zusätzlicher Platz vor der longtable
+\setlength{\LTpost}{0pt} % Kein zusätzlicher Platz nach der longtable
+
+\small % Makes the text in the table slightly smaller
+\begin{longtable}{|>{\RaggedRight}X|c|c|}
+\hline
+\textbf{Beschreibung} & \textbf{US} & \textbf{Priorität} \\
+\hline
+\endhead % End of the table header (repeated on each page)
+
+\hline
+\multicolumn{3}{|r|}{Fortsetzung auf nächster Seite} \\
+\hline
+\endfoot % Footer for page breaks
+
+\hline
+\endlastfoot % Footer for the end of the table
+
+Als Nutzer möchte ich beim Öffnen der App das aktuelle Wetter für meinen Standort sehen. & US-001 & Hoch \\
+Als Nutzer möchte ich nach Städten suchen und sie einer Liste hinzufügen können. & US-002 & Hoch \\
+Als Nutzer möchte ich das Wetter der zukünftigen Tage an meinem Standort sehen. & US-003 & Hoch \\
+Als Nutzer möchte ich das zukünftige Wetter von gespeicherten Städten sehen. & US-004 & Hoch \\
+Als Nutzer möchte ich Städte aus meiner Liste löschen können. & US-005 & Hoch \\
+Als Nutzer möchte ich auch ohne Internet das letzte aktuelle Wetter an meinem Standort sehen. & US-006 & Mittel \\
+Als Nutzer möchte ich auch ohne Internet das Wetter aus zuvor hinzugefügten Städten sehen. & US-007 & Mittel \\
+Als Nutzer möchte ich eine Fehlermeldung sehen, wenn ich kein Internet habe. & US-008 & Mittel \\
+Als Nutzer möchte ich eine Hilfefunktion und ein Impressum in der App finden. & US-009 & Niedrig \\
+\end{longtable}
+
+\normalsize
+\subsection{Detaillierte User Story Beschreibungen}
+
+In diesem Abschnitt werden die einzelnen User Stories ausführlich beschrieben, inklusive ihrer Akzeptanzkriterien.
+\newpage
+\subsubsection{User Story: Als Nutzer möchte ich beim Öffnen der App das aktuelle Wetter für meinen Standort sehen.}
+\textcolor{storyblue}{\textbf{ID:}} US-001 \\
+\textcolor{storyblue}{\textbf{Priorität:}} Hoch \\
+\textcolor{storyblue}{\textbf{Status:}} Neu \\
+\textcolor{storyblue}{\textbf{Verantwortlicher:}} Siehe GitHub \\
+\textcolor{storyblue}{\textbf{Geschätzte Story Points:}} 8
+
+\vspace{0.5em}
+
+\textcolor{storygreen}{\textbf{Als}} \textit{Nutzer} \\
+\textcolor{storygreen}{\textbf{möchte ich}} \textit{die App öffnen und ohne mein Zutun das aktuelle Wetter für meinen Standort angezeigt bekommen}, \\
+\textcolor{storygreen}{\textbf{damit}} \textit{ich genaue Infos über meinen Standort habe}.
+
+\vspace{1em}
+
+\paragraph{Details und Beschreibung}
+Diese User Story beschreibt die Kernfunktionalität der App, bei der der Nutzer sofort nach dem Start die relevantesten Wetterdaten für seinen aktuellen geografischen Standort sieht. Dies erfordert Zugriff auf die Standortdienste des Geräts und die Abfrage einer Wetter-API.
+
+\vspace{0.5em}
+\hrule
+
+\paragraph{Akzeptanzkriterien}
+\begin{itemize}
+    \item Die App startet erfolgreich und fordert ggf. die Standortberechtigung an.
+    \item Nach Erteilung der Berechtigung wird das aktuelle Wetter (Temperatur, Wetterlage, ggf. Wind, Luftfeuchtigkeit) für den aktuellen Standort angezeigt.
+    \item Bei fehlender Standortberechtigung wird eine informative Meldung angezeigt und die Möglichkeit geboten, die Berechtigung zu aktivieren oder manuell eine Stadt einzugeben (siehe US-002).
+    \item Die angezeigten Daten sind aktuell und stammen von einer zuverlässigen Wetter-API.
+\end{itemize}
+
+\vspace{0.5em}
+\hrule
+
+\paragraph{Abhängigkeiten}
+* Benötigt eine Wetter-API-Integration.
+* Benötigt Zugriff auf Standortdienste des Geräts.
+
+\paragraph{Anmerkungen/Diskussion}
+* 05.06.2025: Klärung, welche spezifischen Wetterdaten (z.B. Regenwahrscheinlichkeit, UV-Index) standardmäßig angezeigt werden sollen.
+
+\clearpage
+
+\subsubsection{User Story: Als Nutzer möchte ich nach Städten suchen und sie einer Liste hinzufügen können.}
+\textcolor{storyblue}{\textbf{ID:}} US-002 \\
+\textcolor{storyblue}{\textbf{Priorität:}} Hoch \\
+\textcolor{storyblue}{\textbf{Status:}} Neu \\
+\textcolor{storyblue}{\textbf{Verantwortlicher:}} Sihe GitHub \\
+\textcolor{storyblue}{\textbf{Geschätzte Story Points:}} 6
+
+\vspace{0.5em}
+
+\textcolor{storygreen}{\textbf{Als}} \textit{Nutzer} \\
+\textcolor{storygreen}{\textbf{möchte ich}} \textit{nach Städten suchen und sie einer Liste hinzufügen können}, \\
+\textcolor{storygreen}{\textbf{damit}} \textit{ich nachher auch das Wetter in diesen Städten anschauen kann}.
+
+\vspace{1em}
+
+\paragraph{Details und Beschreibung}
+Diese User Story ermöglicht es dem Nutzer, Städte manuell hinzuzufügen, um deren Wetter zu verfolgen. Dies beinhaltet eine Suchfunktion und die Möglichkeit, ausgewählte Städte in einer persistenten Liste zu speichern.
+
+\vspace{0.5em}
+\hrule
+
+\paragraph{Akzeptanzkriterien}
+\begin{itemize}
+    \item Es gibt ein Suchfeld, über das der Nutzer Städte eingeben kann.
+    \item Die Suchergebnisse zeigen relevante Städte basierend auf der Eingabe an (z.B. mit Autovervollständigung).
+    \item Der Nutzer kann eine Stadt aus den Suchergebnissen auswählen und diese zu einer Liste hinzufügen.
+    \item Die hinzugefügten Städte bleiben auch nach dem Schließen der App in der Liste gespeichert.
+    \item Die Liste der Städte ist übersichtlich dargestellt und leicht zugänglich.
+\end{itemize}
+
+\vspace{0.5em}
+\hrule
+
+\paragraph{Abhängigkeiten}
+* Benötigt eine Stadt-Geocoding-API oder ähnliche Datenbank.
+* Benötigt eine persistente Speicherung der Städte.
+
+\paragraph{Anmerkungen/Diskussion}
+* 05.06.2025: Überlegen, ob es eine Begrenzung für die Anzahl der speicherbaren Städte geben soll.
+
+\clearpage
+
+\subsubsection{User Story: Als Nutzer möchte ich das Wetter der zukünftigen Tage an meinem Standort sehen.}
+\textcolor{storyblue}{\textbf{ID:}} US-003 \\
+\textcolor{storyblue}{\textbf{Priorität:}} Hoch \\
+\textcolor{storyblue}{\textbf{Status:}} Neu \\
+\textcolor{storyblue}{\textbf{Verantwortlicher:}} Siehe GitHub \\
+\textcolor{storyblue}{\textbf{Geschätzte Story Points:}} 8
+
+\vspace{0.5em}
+
+\textcolor{storygreen}{\textbf{Als}} \textit{Nutzer} \\
+\textcolor{storygreen}{\textbf{möchte ich}} \textit{das Wetter der zukünftigen Tage an meinem Standort sehen}, \\
+\textcolor{storygreen}{\textbf{damit}} \textit{ich genau über die Wettersituation informiert bin}.
+
+\vspace{1em}
+
+\paragraph{Details und Beschreibung}
+Diese User Story erweitert die Standortanzeige um eine Vorhersage für die kommenden Tage (z.B. 3-5 Tage). Der Nutzer soll auf einen Blick sehen können, wie sich das Wetter entwickelt.
+
+\vspace{0.5em}
+\hrule
+
+\paragraph{Akzeptanzkriterien}
+\begin{itemize}
+    \item Neben dem aktuellen Wetter werden Vorhersagen für die nächsten 3/5 Tage für den aktuellen Standort angezeigt.
+    \item Jede Tagesvorhersage zeigt mindestens die Höchst- und Tiefsttemperatur und die Wetterlage an (z.B. Sonnensymbol, Regensymbol).
+    \item Die Vorhersage ist klar und übersichtlich dargestellt.
+    \item Die Daten stammen von der integrierten Wetter-API.
+\end{itemize}
+
+\vspace{0.5em}
+\hrule
+
+\paragraph{Abhängigkeiten}
+* Benötigt eine Wetter-API, die Vorhersagedaten bereitstellt.
+* Abhängig von US-001 (Standortbestimmung).
+
+\paragraph{Anmerkungen/Diskussion}
+* 05.06.2025: Festlegen, wie viele Tage die Vorhersage umfassen soll (z.B. 3 oder 5 Tage).
+
+\clearpage
+
+\subsubsection{User Story: Als Nutzer möchte ich das zukünftige Wetter von gespeicherten Städten sehen.}
+\textcolor{storyblue}{\textbf{ID:}} US-004 \\
+\textcolor{storyblue}{\textbf{Priorität:}} Hoch \\
+\textcolor{storyblue}{\textbf{Status:}} Neu \\
+\textcolor{storyblue}{\textbf{Verantwortlicher:}} Siehe GitHub \\
+\textcolor{storyblue}{\textbf{Geschätzte Story Points:}} 8
+
+\vspace{0.5em}
+
+\textcolor{storygreen}{\textbf{Als}} \textit{Nutzer} \\
+\textcolor{storygreen}{\textbf{möchte ich}} \textit{das zukünftige Wetter einer der zuvor festgelegten Städte sehen}, \\
+\textcolor{storygreen}{\textbf{damit}} \textit{ich über die Situation an einem anderen Ort Bescheid weiß}.
+
+\vspace{1em}
+
+\paragraph{Details und Beschreibung}
+Diese User Story ermöglicht es dem Nutzer, die Wettervorhersage für die Städte einzusehen, die er zu seiner Liste hinzugefügt hat.
+
+\vspace{0.5em}
+\hrule
+
+\paragraph{Akzeptanzkriterien}
+\begin{itemize}
+    \item Der Nutzer kann eine gespeicherte Stadt aus der Liste auswählen.
+    \item Nach Auswahl der Stadt werden die aktuellen Wetterdaten und die Vorhersage für die nächsten [X] Tage für diese Stadt angezeigt.
+    \item Die Anzeige der Vorhersage ist konsistent mit der Anzeige für den eigenen Standort (US-003).
+\end{itemize}
+
+\vspace{0.5em}
+\hrule
+
+\paragraph{Abhängigkeiten}
+* Abhängig von US-002 (Städte hinzufügen und speichern).
+* Benötigt Wetter-API für Vorhersagedaten für beliebige Orte.
+
+\paragraph{Anmerkungen/Diskussion}
+* 05.06.2025: Wie wird zwischen den Städten gewechselt? (z.B. Swipe-Gesten, Dropdown-Menü).
+
+\clearpage
+
+\subsubsection{User Story: Als Nutzer möchte ich Städte aus meiner Liste löschen können.}
+\textcolor{storyblue}{\textbf{ID:}} US-005 \\
+\textcolor{storyblue}{\textbf{Priorität:}} Hoch \\
+\textcolor{storyblue}{\textbf{Status:}} Neu \\
+\textcolor{storyblue}{\textbf{Verantwortlicher:}} Siehe gitHub \\
+\textcolor{storyblue}{\textbf{Geschätzte Story Points:}} 3
+
+\vspace{0.5em}
+
+\textcolor{storygreen}{\textbf{Als}} \textit{Nutzer} \\
+\textcolor{storygreen}{\textbf{möchte ich}} \textit{Städte aus der Liste löschen können}, \\
+\textcolor{storygreen}{\textbf{damit}} \textit{ich meine Ansicht verbessern und vereinfachen kann}.
+
+\vspace{1em}
+
+\paragraph{Details und Beschreibung}
+Diese User Story bietet die Möglichkeit, nicht mehr benötigte Städte aus der Favoritenliste des Nutzers zu entfernen.
+
+\vspace{0.5em}
+\hrule
+
+\paragraph{Akzeptanzkriterien}
+\begin{itemize}
+    \item Der Nutzer kann eine Option zum Löschen von Städten in der Liste finden (z.B. Bearbeiten-Button, Swipe-Geste).
+    \item Nach Bestätigung wird die Stadt aus der Liste entfernt.
+    \item Die Änderungen werden dauerhaft gespeichert.
+    \item Der Nutzer erhält eine visuelle Rückmeldung über das Löschen der Stadt.
+\end{itemize}
+
+\vspace{0.5em}
+\hrule
+
+\paragraph{Abhängigkeiten}
+* Abhängig von US-002 (Städte hinzufügen und speichern).
+
+\paragraph{Anmerkungen/Diskussion}
+* 05.06.2025: Bestätigungsdialog für das Löschen einer Stadt implementieren, um versehentliches Löschen zu verhindern.
+
+\clearpage
+
+\subsubsection{User Story: Als Nutzer möchte ich auch ohne Internet das letzte aktuelle Wetter an meinem Standort sehen.}
+\textcolor{storyblue}{\textbf{ID:}} US-006 \\
+\textcolor{storyblue}{\textbf{Priorität:}} Mittel \\
+\textcolor{storyblue}{\textbf{Status:}} Neu \\
+\textcolor{storyblue}{\textbf{Verantwortlicher:}} Siehe GitHub \\
+\textcolor{storyblue}{\textbf{Geschätzte Story Points:}} 5
+
+\vspace{0.5em}
+
+\textcolor{storygreen}{\textbf{Als}} \textit{Nutzer} \\
+\textcolor{storygreen}{\textbf{möchte ich}} \textit{auch ohne Internet das letzte aktuelle Wetter an meinem Standort sehen}, \\
+\textcolor{storygreen}{\textbf{damit}} \textit{ich auch ohne Internet die letzten zuverlässigen Wetterzustände sehen kann}.
+
+\vspace{1em}
+
+\paragraph{Details und Beschreibung}
+Diese User Story beschreibt die Offline-Fähigkeit der App für den aktuellen Standort. Die zuletzt geladenen Wetterdaten sollen gespeichert und bei fehlender Internetverbindung angezeigt werden.
+
+\vspace{0.5em}
+\hrule
+
+\paragraph{Akzeptanzkriterien}
+\begin{itemize}
+    \item Bei bestehender Internetverbindung werden die Wetterdaten des Standorts lokal gespeichert.
+    \item Wenn die Internetverbindung unterbrochen ist, werden die zuletzt gespeicherten Wetterdaten für den aktuellen Standort angezeigt.
+    \item Es wird ein Hinweis angezeigt, dass die Daten nicht aktuell sind und wann sie zuletzt aktualisiert wurden.
+    \item Der Wert sollte nicht älter als das Ende des Forecasts sein. (Die Daten sollten innerhalb des Gültigkeitszeitraums der letzten Vorhersage liegen).
+\end{itemize}
+
+\vspace{0.5em}
+\hrule
+
+\paragraph{Abhängigkeiten}
+* Abhängig von US-001 (Aktuelles Wetter am Standort).
+* Benötigt lokale Speichermechanismen.
+
+\paragraph{Anmerkungen/Diskussion}
+* 05.06.2025: Festlegen, wie lange die gecachten Daten als "zuverlässig" gelten (z.B. maximal 1-2 Stunden für aktuelle Daten, bis zum Ende des Forecasts für Vorhersagen).
+
+\clearpage
+
+\subsubsection{User Story: Als Nutzer möchte ich auch das Wetter aus zuvor hinzugefügten Städten sehen ohne Internet zu haben.}
+\textcolor{storyblue}{\textbf{ID:}} US-007 \\
+\textcolor{storyblue}{\textbf{Priorität:}} Mittel \\
+\textcolor{storyblue}{\textbf{Status:}} Neu \\
+\textcolor{storyblue}{\textbf{Verantwortlicher:}} Siehe GitHub \\
+\textcolor{storyblue}{\textbf{Geschätzte Story Points:}} 5
+
+\vspace{0.5em}
+
+\textcolor{storygreen}{\textbf{Als}} \textit{Nutzer} \\
+\textcolor{storygreen}{\textbf{möchte ich}} \textit{auch das Wetter aus zuvor hinzugefügten Städten sehen, ohne Internet zu haben}. \\
+\textcolor{storygreen}{\textbf{Der Wert sollte nicht älter als das Ende des Forecasts sein.}}
+
+\vspace{1em}
+
+\paragraph{Details und Beschreibung}
+Diese User Story erweitert die Offline-Funktionalität auf die vom Nutzer gespeicherten Städte. Die zuletzt abgerufenen Wetterdaten und Vorhersagen für diese Städte sollen ebenfalls gecacht und bei fehlender Internetverbindung angezeigt werden.
+
+\vspace{0.5em}
+\hrule
+
+\paragraph{Akzeptanzkriterien}
+\begin{itemize}
+    \item Bei bestehender Internetverbindung werden die Wetterdaten der gespeicherten Städte lokal gespeichert.
+    \item Wenn die Internetverbindung unterbrochen ist, werden die zuletzt gespeicherten Wetterdaten und Vorhersagen für die hinzugefügten Städte angezeigt.
+    \item Es wird ein Hinweis angezeigt, dass die Daten nicht aktuell sind und wann sie zuletzt aktualisiert wurden.
+    \item Die angezeigten Wetterdaten und Vorhersagen sollten nicht älter sein als das Ende des letzten abgerufenen Forecasts.
+\end{itemize}
+
+\vspace{0.5em}
+\hrule
+
+\paragraph{Abhängigkeiten}
+* Abhängig von US-002 (Städte hinzufügen), US-004 (Zukünftiges Wetter gespeicherter Städte).
+* Benötigt lokale Speichermechanismen.
+
+\paragraph{Anmerkungen/Diskussion}
+* 05.06.2025: Speicherkapazität der App für Offline-Daten berücksichtigen, insbesondere bei vielen gespeicherten Städten.
+
+\clearpage
+
+\subsubsection{User Story: Als Nutzer möchte ich eine Fehlermeldung sehen, wenn ich kein Internet habe.}
+\textcolor{storyblue}{\textbf{ID:}} US-008 \\
+\textcolor{storyblue}{\textbf{Priorität:}} Mittel \\
+\textcolor{storyblue}{\textbf{Status:}} Neu \\
+\textcolor{storyblue}{\textbf{Verantwortlicher:}} Siehe GitHub \\
+\textcolor{storyblue}{\textbf{Geschätzte Story Points:}} 1
+
+\vspace{0.5em}
+
+\textcolor{storygreen}{\textbf{Als}} \textit{Nutzer} \\
+\textcolor{storygreen}{\textbf{möchte ich}} \textit{dass es eine Fehlermeldung gibt}, \\
+\textcolor{storygreen}{\textbf{damit}} \textit{ich weiß, dass ich aktuell kein Internet habe}.
+
+\vspace{1em}
+
+\paragraph{Details und Beschreibung}
+Diese User Story stellt sicher, dass der Nutzer klar über den Verbindungsstatus der App informiert wird, insbesondere wenn keine Internetverbindung verfügbar ist und daher keine aktuellen Wetterdaten abgerufen werden können.
+
+\vspace{0.5em}
+\hrule
+
+\paragraph{Akzeptanzkriterien}
+\begin{itemize}
+    \item Wenn die App versucht, Wetterdaten abzurufen und keine Internetverbindung besteht, wird eine sichtbare Fehlermeldung angezeigt (z.B. ein Banner oder Toast-Nachricht).
+    \item Die Fehlermeldung informiert den Nutzer klar darüber, dass keine Verbindung besteht.
+    \item Die Fehlermeldung verschwindet automatisch, sobald die Verbindung wiederhergestellt ist, oder bietet die Möglichkeit, sie manuell zu schließen.
+    \item Die Fehlermeldung sollte die primäre Anzeige nicht überdecken.
+\end{itemize}
+
+\vspace{0.5em}
+\hrule
+
+\paragraph{Abhängigkeiten}
+* Benötigt eine Netzwerkstatusprüfung.
+
+\paragraph{Anmerkungen/Diskussion}
+* 05.06.2025: Formulierung der Fehlermeldung abstimmen. Soll sie auch auf die Offline-Funktionalität hinweisen?
+
+\clearpage
+
+\subsubsection{User Story: Als Nutzer möchte ich eine Hilfefunktion und ein Impressum in der App finden.}
+\textcolor{storyblue}{\textbf{ID:}} US-009 \\
+\textcolor{storyblue}{\textbf{Priorität:}} Niedrig \\
+\textcolor{storyblue}{\textbf{Status:}} Neu \\
+\textcolor{storyblue}{\textbf{Verantwortlicher:}} Siehe GitHub \\
+\textcolor{storyblue}{\textbf{Geschätzte Story Points:}} 2
+
+\vspace{0.5em}
+
+\textcolor{storygreen}{\textbf{Als}} \textit{Nutzer} \\
+\textcolor{storygreen}{\textbf{möchte ich}} \textit{eine Hilfefunktion anklicken können}, \\
+\textcolor{storygreen}{\textbf{damit}} \textit{ich die App erklärt bekomme und sehen kann, von wem sie kommt und mit welcher Lizenz sie ist (Impressum und Hilfe)}.
+
+\vspace{1em}
+
+\paragraph{Details und Beschreibung}
+Diese User Story umfasst die Bereitstellung von Informationen über die App selbst, ihre Nutzung und rechtliche Hinweise. Dies ist wichtig für die Benutzerfreundlichkeit und die Einhaltung gesetzlicher Vorschriften (Impressumspflicht in Deutschland).
+
+\vspace{0.5em}
+\hrule
+
+\paragraph{Akzeptanzkriterien}
+\begin{itemize}
+    \item Es gibt einen zugänglichen Menüpunkt oder Button, der zur Hilfefunktion/zum Impressum führt.
+    \item Die Hilfefunktion enthält eine kurze Einführung in die App und deren Hauptfunktionen.
+    \item Das Impressum enthält die gesetzlich vorgeschriebenen Informationen (Name, Adresse, ggf. Rechtsform, Vertretungsberechtigter).
+    \item Informationen zur Lizenzierung der verwendeten Bibliotheken/APIs sind verfügbar.
+    \item Die Inhalte sind lesbar und gut formatiert.
+\end{itemize}
+
+\vspace{0.5em}
+\hrule
+
+\paragraph{Abhängigkeiten}
+* Keine direkten technischen Abhängigkeiten; Fokus liegt auf Content-Erstellung.
+
+\paragraph{Anmerkungen/Diskussion}
+* 05.06.2025: Inhalte für Hilfe und Impressum finalisieren. Rechtliche Prüfung des Impressums erforderlich.
+
+\vfill
+\small 
+Für die Erstellung dieses Projekts wurde die Unterstützung von Gemini, einem KI-gestützten Sprachmodell von Google, sowie dem Duden Mentor (einschließlich seines KI-Assistenten für Umformulierungen) in Anspruch genommen. Die finale Prüfung und Bearbeitung sämtlicher Inhalte erfolgte eigenverantwortlich.
+\normalsize
+
+
+\newpage
+
 \section{Technische Dokumentation}
 \subsection{Datenvorbereitung \small{(Benedikt Zundel)}}
 
