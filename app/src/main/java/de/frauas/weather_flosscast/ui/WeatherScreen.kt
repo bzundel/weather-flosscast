@@ -1,6 +1,5 @@
 package de.frauas.weather_flosscast.ui
 
-import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -39,31 +38,13 @@ import de.frauas.weather_flosscast.CityList
 import de.frauas.weather_flosscast.Forecast
 import de.frauas.weather_flosscast.getCitySearchResults
 import de.frauas.weather_flosscast.getForecastFromCacheOrDownload
-
-//Probedaten//
-
-data class HourlyEntry(val hourLabel: String, val temp: Int)
-private val dummyHourly: List<HourlyEntry> = run {
-    val list = mutableListOf<HourlyEntry>()
-    // Erster Eintrag = "Now"
-    list += HourlyEntry("Now", (10..30).random())
-    // Einträge 1 Uhr bis 23 Uhr
-    for (hour in 1..23) {
-        val temp = (10..30).random()
-        list += HourlyEntry("$hour Uhr", temp)
-    }
-    list.toList()
-}
-data class DailyEntry(val dayLabel: String, val high: Int, val low: Int)
-private val dummyWeekly = listOf(
-    DailyEntry("Heute", 25, 18),
-    DailyEntry("Di",    23, 16),
-    DailyEntry("Mi",    24, 17),
-    DailyEntry("Do",    24, 18),
-    DailyEntry("Fr",    28, 20),
-    DailyEntry("Sa",    29, 22),
-    DailyEntry("So",    30, 21)
-)
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DayOfWeek
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
 
 // -----------------------------------------------------------------------------
 // function for select the background-colour
@@ -125,12 +106,12 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
 
         // 2) hourly forecast
         item {
-            HourlyForecastRow()
+            HourlyForecastRow(forecast)
         }
 
         // 3) weekly forecast
          item {
-            SevenDayForecastBlock()
+            SevenDayForecastBlock(forecast)
         }
 
         // 4) the 4 infoboxes
@@ -209,7 +190,7 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(// Zustand und High/Low
-                    text = "${forecast.days.firstOrNull()?.hourlyValues?.firstOrNull()?.weatherCode}  " + "${getDailyMaxTemp(forecast)}° / " + "${getDailyMinTemp(forecast)}°",
+                    text = "${forecast.days.firstOrNull()?.hourlyValues?.firstOrNull()?.weatherCode}  " + "${forecast.getDailyMaxTemp()}° / " + "${forecast.getDailyMinTemp()}°",
                     color = Color.White,
                     fontSize = 20.sp
                 )
@@ -222,7 +203,7 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
 //hourly
 // -----------------------------------------------------------------------------
 @Composable
- fun HourlyForecastRow() {
+ fun HourlyForecastRow(forecast : Forecast?) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         //Text(
         //    text = "Stunden-Vorhersage",
@@ -253,20 +234,79 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
                 //contentPadding = PaddingValues(horizontal = 2.dp),
                 //horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(dummyHourly) { hourly ->
-                    HourlyItem(hourly)
+                items((0 until 24).toList()) { hour ->  //Erstelle 24 HourlyItems 0-24Std
+                    HourlyItem(forecast, hour = hour)
                 }
             }
         }
     }
+}
 
+// -----------------------------------------------------------------------------
+//single element in hourly
+// -----------------------------------------------------------------------------
+@Composable
+fun HourlyItem(forecast : Forecast?, hour : Int) {
+    // Jede Stunde nur als Text, ohne extra Card-Hintergrund
+    val HourlyData = forecast?.getHourlyData(hour)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .width(60.dp)
+            .wrapContentHeight()
+    ) {
+        Text(
+            text = HourlyData?.hour?.toString() + " Uhr",//hourly.hourLabel,
+            style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
+        )
+        Spacer(modifier = Modifier.height(17.dp))
+
+        // ADD IMAGE
+        Image(
+            painter = painterResource(id = R.drawable.rain),
+            contentDescription = "",
+            modifier = Modifier.size(22.dp)
+        )
+
+        Spacer(modifier = Modifier.height(17.dp))
+        Text(
+            text = "${HourlyData?.temp}°",
+            style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
+        )
+    }
+}
+
+data class HourlyData(val hour: Int, val state : Int, val temp: Int)//Dataconstruct for HourlyData
+fun Forecast.getHourlyData(hour: Int): HourlyData? {
+    val timeZone = TimeZone.currentSystemDefault()
+
+    // JNow-Timezone data
+    val nowInstant = Clock.System.now()
+
+    // +hour adding for different data
+    val targetInstant = nowInstant.plus(hour.hours)
+
+    // Converting to local data
+    val targetDateTime = targetInstant.toLocalDateTime(timeZone)
+
+    // Setting today as val
+    val targetDay = days.firstOrNull { it.date == targetDateTime.date } ?: return null
+
+    // Setting hour as val
+    val hourly = targetDay.hourlyValues.firstOrNull { it.dateTime.hour == targetDateTime.hour } ?: return null
+
+    return HourlyData(
+        hour = targetDateTime.hour, //Taking the right values from set values
+        state = hourly.weatherCode,
+        temp = hourly.temperature.roundToInt()
+    )
 }
 
 // -----------------------------------------------------------------------------
 //weekly
 // -----------------------------------------------------------------------------
 @Composable
-fun SevenDayForecastBlock() {
+fun SevenDayForecastBlock(forecast : Forecast?) {
     Spacer(modifier = Modifier.height(10.dp))
     Column(
         modifier = Modifier
@@ -299,14 +339,111 @@ fun SevenDayForecastBlock() {
                     .padding(vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                dummyWeekly.forEach { daily ->
-                    DailyItem(daily)
+                (0 until 7).forEach { day ->  // 7 Tage: Heute + 6
+                    DailyItem(forecast, day)
                 }
             }
         }
     }
 }
 
+// -----------------------------------------------------------------------------
+//single day in daily overview for the 7-Days Overview
+// -----------------------------------------------------------------------------
+@Composable
+fun DailyItem(forecast: Forecast?, day : Int) {
+    //Getting needed data with a function
+    val DailyData = forecast?.getDailyData(day)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = DailyData?.dayLabel ?: "Fehler",          //Day-Label on DailyItem
+            style = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
+            modifier = Modifier.weight(1f)
+        )
+
+        /////////////////////////rain probability icon//////////////////////
+        Spacer(modifier = Modifier.width(16.dp))
+        Image(
+            painter = painterResource(id = R.drawable.dropp),//weatherIconResForCode(weatherCode)
+            contentDescription = "",
+            modifier = Modifier.size(10.dp)
+        )
+        Text(
+            text = " " + DailyData?.rain.toString(),     //Rain probability
+            style = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(modifier = Modifier.width(30.dp))
+
+
+        Image(
+            painter = painterResource(id = R.drawable.cloud_sun),//weatherIconResForCode(weatherCode) ICON
+            contentDescription = "",
+            modifier = Modifier.size(25.dp)
+        )
+        Spacer(modifier = Modifier.width(40.dp))
+
+        Image(
+            painter = painterResource(id = R.drawable.up),//weatherIconResForCode(weatherCode)  ICON
+            contentDescription = "",
+            modifier = Modifier.size(25.dp)
+        )
+
+        Text(
+            text = DailyData?.max.toString() + "°",
+            style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
+        )
+
+        Image(
+            painter = painterResource(id = R.drawable.down),//weatherIconResForCode(weatherCode)
+            contentDescription = "",
+            modifier = Modifier.size(25.dp)
+        )
+
+        //Spacer(modifier = Modifier.width(29.dp))
+        Text(
+            text = DailyData?.min.toString() + "°",
+            style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
+        )
+    }
+}
+
+//Getting data for DailyItem List
+data class DailyData(val dayLabel : String, val state : Int, val rain : Int, val max: Int, val min: Int)
+fun Forecast.getDailyData(day: Int): DailyData {
+    if (day >= days.size) return DailyData("Unbekannt", 0, 0, 0, 0)
+
+    val targetDay = days[day]
+    val date = targetDay.date
+
+    val weekdayLabel = if (day == 0) "Heute" else when (date.dayOfWeek) {
+        DayOfWeek.MONDAY    -> "Montag"
+        DayOfWeek.TUESDAY   -> "Dienstag"
+        DayOfWeek.WEDNESDAY -> "Mittwoch"
+        DayOfWeek.THURSDAY  -> "Donnerstag"
+        DayOfWeek.FRIDAY    -> "Freitag"
+        DayOfWeek.SATURDAY  -> "Samstag"
+        DayOfWeek.SUNDAY    -> "Sonntag"
+    }
+
+    val weatherCode = targetDay.hourlyValues.firstOrNull()?.weatherCode ?: 0
+    val rainAmount = targetDay.hourlyValues.maxOfOrNull { it.precipitationProbability } ?: 0
+    val maxTemp = targetDay.hourlyValues.maxOfOrNull { it.temperature }?.roundToInt() ?: 0
+    val minTemp = targetDay.hourlyValues.minOfOrNull { it.temperature }?.roundToInt() ?: 0
+
+    return DailyData(
+        dayLabel = weekdayLabel,
+        state = weatherCode,
+        rain = rainAmount,
+        max = maxTemp,
+        min = minTemp
+    )
+}
 
 // -----------------------------------------------------------------------------
 //info-boxes
@@ -481,102 +618,8 @@ fun SevenDayForecastBlock() {
 
 
 
-// -----------------------------------------------------------------------------
-//single element in hourly
-// -----------------------------------------------------------------------------
-    @Composable
-    fun HourlyItem(hourly: HourlyEntry) {
-        // Jede Stunde nur als Text, ohne extra Card-Hintergrund
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .width(60.dp)
-                .wrapContentHeight()
-        ) {
-            Text(
-                text = hourly.hourLabel,
-                style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
-            )
-            Spacer(modifier = Modifier.height(17.dp))
-
-            // ADD IMAGE
-            Image(
-                painter = painterResource(id = R.drawable.rain),
-                contentDescription = "",
-                modifier = Modifier.size(22.dp)
-            )
-
-            Spacer(modifier = Modifier.height(17.dp))
-            Text(
-                text = "${hourly.temp}°",
-                style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
-            )
-        }
-    }
-
-// -----------------------------------------------------------------------------
-//single day in daily overview
-// -----------------------------------------------------------------------------
-    @Composable
-    fun DailyItem(daily: DailyEntry) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = daily.dayLabel,
-                style = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
-                modifier = Modifier.weight(1f)
-            )
-
-            /////////////////////////example rain probability//////////////////////
-            Spacer(modifier = Modifier.width(16.dp))
-            Image(
-                painter = painterResource(id = R.drawable.dropp),//weatherIconResForCode(weatherCode)
-                contentDescription = "",
-                modifier = Modifier.size(10.dp)
-            )
-            Text(
-                text = " 100%",
-                style = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
-                modifier = Modifier.weight(1f)
-            )
-            Spacer(modifier = Modifier.width(50.dp))
 
 
-            Image(
-                painter = painterResource(id = R.drawable.storm),//weatherIconResForCode(weatherCode)
-                contentDescription = "",
-                modifier = Modifier.size(25.dp)
-            )
-            Spacer(modifier = Modifier.width(40.dp))
-
-            Image(
-                painter = painterResource(id = R.drawable.up),//weatherIconResForCode(weatherCode)
-                contentDescription = "",
-                modifier = Modifier.size(25.dp)
-            )
-
-            Text(
-                text = "${daily.high}°",
-                style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
-            )
-
-            Image(
-                painter = painterResource(id = R.drawable.down),//weatherIconResForCode(weatherCode)
-                contentDescription = "",
-                modifier = Modifier.size(25.dp)
-            )
-
-            //Spacer(modifier = Modifier.width(29.dp))
-            Text(
-                text = "${daily.low}°",
-                style = MaterialTheme.typography.bodyMedium.copy(color = Color.White)
-            )
-        }
-    }
 
 // -----------------------------------------------------------------------------
 //preview in android studio

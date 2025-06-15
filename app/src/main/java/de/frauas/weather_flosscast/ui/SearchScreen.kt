@@ -433,7 +433,7 @@ fun CityCard(
 
                     /*text = "${forecast?.days?.!!!firstOrNull()!!!?.hourlyValues?.maxOfOrNull { it.temperature }?.roundToInt() ?: "--"}°" +//MIN Max only for last day and last hour, so it is wrong!
                             "/${forecast?.days?.!!!firstOrNull()?!!!.hourlyValues?.minOfOrNull { it.temperature }?.roundToInt() ?: "--"}°",*/
-                    text = "${getDailyMaxTemp(forecast)}°" + "/${getDailyMinTemp(forecast)}°",
+                    text = "${forecast?.getDailyMaxTemp()}°" + "/${forecast?.getDailyMinTemp()}°",
                     style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.8f))
                 )
             }
@@ -450,23 +450,21 @@ fun Forecast.getCurrentTemperature(): Int? {//Utility function to update newest 
 
     return todayForecast.hourlyValues.firstOrNull { it.dateTime.hour == currentHour }?.temperature?.roundToInt()
 }
-fun getDailyMinTemp(forecast: Forecast?): Int {
-    if (forecast == null) return 0
+fun Forecast.getDailyMinTemp(): Int {
 
     val allTemps = mutableListOf<Double>()
 
-    for (daily in forecast.days) {
+    for (daily in days) {
         // add all temps to the list
         allTemps.addAll(daily.hourlyValues.map { it.temperature })
     }
     return allTemps.minOrNull()?.roundToInt() ?: 0
 }
-fun getDailyMaxTemp(forecast: Forecast?): Int {
-    if (forecast == null) return 0
+fun Forecast.getDailyMaxTemp(): Int {
 
     val allTemps = mutableListOf<Double>()
 
-    for (daily in forecast.days) {
+    for (daily in days) {
         // add all temps to the list
         allTemps.addAll(daily.hourlyValues.map { it.temperature })
     }
