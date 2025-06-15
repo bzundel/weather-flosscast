@@ -430,7 +430,7 @@ fun CityCard(
 
                 //High and low temperatures under
                 Text(
-                    text = "${getDailyMaxTemp(forecast)}°" + "/${getDailyMinTemp(forecast)}°",
+                    text = "${forecast?.getDailyMaxTemp()}°" + "/${forecast?.getDailyMinTemp()}°",
                     style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.8f)),
                     fontSize = 12.sp
                 )
