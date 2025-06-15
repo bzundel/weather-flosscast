@@ -248,6 +248,9 @@ fun NewCityCard(
     city: City,
     onCitySelected: (String) -> Unit
 ) {
+    // Coroutine-Scope für den Klick
+    val scope = rememberCoroutineScope()
+
     Card(
         shape = RoundedCornerShape(15.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -255,10 +258,36 @@ fun NewCityCard(
             .fillMaxWidth()
             .height(80.dp)
             .clickable {
-                if(CityList.getCities(context).contains(city))Toast.makeText(context, "Ort '${city.cityName}' existiert bereits.", Toast.LENGTH_SHORT).show()
-                CityList.addCity(context, city)               //  Add city to saved list
-                onCitySelected(city.cityName)                 //  Notify NavHost
-                Toast.makeText(context, "${city.cityName} hinzugefügt", Toast.LENGTH_SHORT).show()
+                scope.launch {
+                    try{
+                        // 1) Versuch, Forecast zu laden
+                        getForecastFromCacheOrDownload(
+                            context.filesDir,
+                            city.latitude,
+                            city.longitude
+                        )
+
+                        // 2) wenn erfolgreich, zur Liste hinzufügen und navigieren
+                        if (CityList.getCities(context).contains(city)) Toast.makeText(
+                            context,
+                            "Ort '${city.cityName}' existiert bereits.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        CityList.addCity(context, city)               //  Add city to saved list
+                        onCitySelected(city.cityName)                 //  Notify NavHost
+                        Toast.makeText(context, "${city.cityName} hinzugefügt", Toast.LENGTH_SHORT).show()
+
+                    } catch (e: Exception) {
+                        // 3) wenn fehlschlägt, nur Toast
+                        Toast
+                            .makeText(
+                                context,
+                                "Für ${city.cityName} konnten keine Wetterdaten geladen werden",
+                                Toast.LENGTH_SHORT
+                            )
+                            .show()
+                    }
+            }
             },
         colors = CardDefaults.cardColors(containerColor = Color.DarkGray)
     ) {
