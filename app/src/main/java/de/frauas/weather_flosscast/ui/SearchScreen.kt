@@ -362,6 +362,7 @@ fun CityCard(
 
 ) {
 
+
     // Prüfung isNight?//
     val today     = forecast?.days?.firstOrNull()
     val rawSunrise= today?.sunrise
@@ -379,7 +380,7 @@ fun CityCard(
 
 
     // Hintergrundfarbe je nach Wetterbedingung
-    val bgColor = colorForCityCard(forecast?.days?.firstOrNull()?.hourlyValues?.firstOrNull()?.weatherCode ?: 0, isNight )
+    val bgColor = colorForWmoCode(forecast?.days?.firstOrNull()?.hourlyValues?.firstOrNull()?.weatherCode ?: 0, isNight )
 
     Card(
         shape = RoundedCornerShape(15.dp),
@@ -469,59 +470,6 @@ fun CityCard(
                     fontSize = 12.sp
                 )
             }
-        }
-    }
-}
-
-/**
- * Function for get the right color of the seperate city-cards
- */
-private fun colorForCityCard(code: Int, isNight: Boolean): Color {
-    return if (isNight) {
-        // Color for nighttime:
-        Color(0xFF37474F)// Very dark grayish blue
-    } else {
-        // Colors for daytime:
-        // 0xFF33AAFF -> Vivid blue for clear sky
-        // 0xFF808080 -> Dark gray for rain or storm
-        // 0xFFB0BEC5 -> Grayish blue for snow or clouds
-        when (code) {
-            0                                                                         -> Color(0xFF33AAFF) // Vivid blue
-            in 1..9, in 10..19, in 30..49,in 70..79            -> Color(0xFFB0BEC5) // Grayish blue
-            in 20..29, in 50..59, in 60..69, in 80..99         -> Color(0xFF808080) // Dark gray
-            else                                                                      -> Color(0xFFB0BEC5) // Fallback Grayish blue
-        }
-    }
-}
-
-/**
-* Function for get the right icon based on weather-code and if its night or not
-*/
-@DrawableRes
-fun getIconForWmoCode(code: Int, isNight: Boolean): Int {
-    return if (isNight) {
-        when (code) {
-            0                                  -> R.drawable.monn          // klarer Himmel
-            in 1..3                      -> R.drawable.cloud_moon    // Wolkenauf-/-abbau
-            13, 17, 19, in 90..99        -> R.drawable.storm         // Gewitter/Trichterwolke
-            in 23..24, 26                -> R.drawable.snowrain      // Schneeregen / gefrierender Niederschlag
-            22, in 70..79                -> R.drawable.snow          // Schnee / Schneeschauer
-            in 20..21, 25,
-            in 50..59, in 60..69,
-            in 80..89                    -> R.drawable.rain          // Drizzle / Rain / Showers
-            else                               -> R.drawable.cloud_moon    // Nebel, Staub, sonstige Wolken
-        }
-    } else {
-        when (code) {
-            0                                  -> R.drawable.sun           // klarer Himmel
-            in 1..3                      -> R.drawable.cloud_sun     // Wolkenauf-/-abbau
-            13, 17, 19, in 90..99        -> R.drawable.storm         // Gewitter/Trichterwolke
-            in 23..24, 26                -> R.drawable.snowrain      // Schneeregen / gefrierender Niederschlag
-            22, in 70..79                -> R.drawable.snow          // Schnee / Schneeschauer
-            in 20..21, 25,
-            in 50..59, in 60..69,
-            in 80..89                    -> R.drawable.rain          // Drizzle / Rain / Showers
-            else                               -> R.drawable.cloud         // Nebel, Staub, sonstige Wolken
         }
     }
 }
