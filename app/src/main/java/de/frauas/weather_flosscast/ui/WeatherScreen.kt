@@ -1,6 +1,8 @@
 package de.frauas.weather_flosscast.ui
 
 import android.widget.Toast
+import androidx.annotation.DrawableRes
+import androidx.annotation.RawRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,11 +30,15 @@ import com.airbnb.lottie.compose.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import de.frauas.weather_flosscast.City
 import de.frauas.weather_flosscast.CityList
 import de.frauas.weather_flosscast.Forecast
@@ -45,7 +51,8 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
-
+import kotlinx.coroutines.delay
+import java.time.LocalDateTime
 // -----------------------------------------------------------------------------
 // function for select the background-colour
 // -----------------------------------------------------------------------------
@@ -75,6 +82,11 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
     val city = CityList.getCities(context).find { it.cityName == cityName } //Getting cityData from CityList with find function
     var forecast by remember { mutableStateOf<Forecast?>(null) }            //Stores the forecast state and recomposition when updated
 
+
+    var isRefreshing by remember { mutableStateOf(false) }// Pull-to-Refresh state
+    val scope      = rememberCoroutineScope()
+    val swipeState = rememberSwipeRefreshState(isRefreshing)
+
     //Getting forecast data for city that was handed over to WeatherScreen/////////////////////////////////////////
     LaunchedEffect(cityName) {
         if (city != null) {
@@ -92,7 +104,28 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     val lifecycleOwner = LocalLifecycleOwner.current    //Debugging
     val filesDir = LocalContext.current.filesDir        //Debugging
-
+// SwipeRefresh component over the rest of the components
+    // It refreshed the forecast-data when swiping down with indicator
+    SwipeRefresh(
+        state     = swipeState,
+        onRefresh = {
+            scope.launch {
+                isRefreshing = true
+                TODO()
+                Toast.makeText(context, "Daten aktualisiert", Toast.LENGTH_SHORT).show()
+                delay(1000)
+                isRefreshing = false
+            }
+        },
+        indicator = { state, trigger ->
+            SwipeRefreshIndicator(
+                state                   = state,
+                refreshTriggerDistance  = trigger,
+                backgroundColor         = Color.DarkGray,
+                contentColor            = Color.White
+            )
+        },
+    ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(bgC),
         contentPadding = PaddingValues(vertical = 24.dp),
@@ -139,7 +172,7 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
             }
             Spacer(modifier = Modifier.height(16.dp))
         }
-    }
+    }}
 }
 
 // -----------------------------------------------------------------------------
@@ -147,21 +180,34 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
 // -----------------------------------------------------------------------------
 @Composable
  fun WeatherHeader(cityName : String, forecast: Forecast, onBack:   () -> Unit) {
+
+    // 1) Load first day
+    val today = forecast.days.firstOrNull() ?: return
+
+    // 2) Day/Night check
+    val sunrise = today.sunrise.toString().let { LocalDateTime.parse(it) }
+    val sunset  = today.sunset.toString().let { LocalDateTime.parse(it) }
+    val now     = LocalDateTime.now()
+    val isNight = now.isBefore(sunrise) || now.isAfter(sunset)
+
+    // 3) Get weathercode of first hour
+    val firstHour = today.hourlyValues.firstOrNull()
+    val wmoCode   = firstHour?.weatherCode ?: 0
+
+    // 4) Select the right lottie-animation
+    val lottieRes = getLottieResForWmoCode(wmoCode, isNight)
+
+
+
     Box(modifier = Modifier.fillMaxWidth().height(200.dp).background(bgC)) {
 
         Row(modifier = Modifier.fillMaxSize().padding(start = 32.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically) {
 
-            /*Image(
-                    painter = painterResource(id=R.drawable.sun_svgrepo_com),
-                    contentDescription = "",
-                    modifier = Modifier
-                        .size(80.dp)
-                        //.padding(end = 32.dp)
-                )*/
+
             //Lottie-animation
-            val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.sonne))
+            val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(lottieRes))
             val progress by animateLottieCompositionAsState(composition, iterations = LottieConstants.IterateForever)
             LottieAnimation(composition = composition, progress = { progress }, modifier = Modifier.size(100.dp))
 
@@ -176,23 +222,22 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
                     fontSize = 30.sp,
                     modifier = Modifier
                         .clickable { onBack()}  // ruft SearchScreen auf
-                        .padding(8.dp)
                 )
-
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(// Temperatur
-                    text = "${forecast.getCurrentTemperature()}" + "°", // Hier kannst du den echten Wert einsetzen
+                    text = "${forecast.getCurrentTemperature()}" + "°",
                     color = Color.White,
-                    fontSize = 64.sp,
+                    fontSize = 60.sp,
                 )
-
                 Spacer(modifier = Modifier.height(8.dp))
 
+                val code      = forecast?.days?.firstOrNull()?.hourlyValues?.firstOrNull()?.weatherCode ?: 0
+                val condition = getConditionForWmoCode(code)
                 Text(// Zustand und High/Low
-                    text = "${forecast.days.firstOrNull()?.hourlyValues?.firstOrNull()?.weatherCode}  " + "${forecast.getDailyMaxTemp()}° / " + "${forecast.getDailyMinTemp()}°",
+                    text = "${condition} ",// " + "${getDailyMaxTemp(forecast)}° / " + "${getDailyMinTemp(forecast)}°
                     color = Color.White,
-                    fontSize = 20.sp
+                    fontSize = 22.sp
                 )
             }
         }
@@ -619,6 +664,60 @@ fun Forecast.getDailyData(day: Int): DailyData {
 
 
 
+
+
+
+@RawRes
+fun getLottieResForWmoCode(code: Int, isNight: Boolean): Int {
+    return if (isNight) {
+        when (code) {
+            0                                  -> R.raw.mond              // klarer Himmel
+            in 1..3                      -> R.raw.mondundwolken     // Wolkenauf-/-abbau
+            13, 17, 19, in 90..99        -> R.raw.gewitter          // Gewitter/Trichterwolke
+            in 23..24, 26                -> R.raw.mondschnee        // Schneeregen / gefrierender Niederschlag
+            22, in 70..79                -> R.raw.mondschnee        // Schnee / Schneeschauer
+            in 20..21, 25,
+            in 50..59, in 60..69,
+            in 80..89                    -> R.raw.mondregen         // Drizzle / Rain / Showers
+            else                               -> R.raw.mondundwolken     // Nebel, Staub, sonstige Wolken
+        }
+    } else {
+        when (code) {
+            0                                  -> R.raw.sonne             // klarer Himmel
+            in 1..3                      -> R.raw.sonnewolken       // Wolkenauf-/-abbau
+            13, 17, 19, in 90..99        -> R.raw.gewitter          // Gewitter/Trichterwolke
+            in 23..24, 26                -> R.raw.schnee            // Schneeregen / gefrierender Niederschlag
+            22, in 70..79                -> R.raw.schnee            // Schnee / Schneeschauer
+            in 20..21, 25,
+            in 50..59, in 60..69,
+            in 80..89                    -> R.raw.sonne             // Drizzle / Rain / Showers
+            else                               -> R.raw.wolken            // Nebel, Staub, sonstige Wolken
+        }
+    }
+}
+
+/**
+ * Gibt eine kurze Wetterbeschreibung zum WMO-Code zurück.
+ */
+fun getConditionForWmoCode(code: Int): String {
+    return when (code) {
+        0  -> "Klar"
+        1  -> "Hauptsächlich klar"
+        2  -> "Teilweise bewölkt"
+        3  -> "Bedeckt"
+        in 45..48    -> "Nebel"
+        in 51..55    -> "Nieselregen"
+        in 56..57    -> "Gefrierender Nieselregen"
+        in 61..65    -> "Regen"
+        in 66..67    -> "Gefrierender Regen"
+        in 71..75    -> "Schneefall"
+        77           -> "Schneekörner"
+        in 80..82    -> "Regenschauer"
+        in 85..86    -> "Schneeschauer"
+        in 95..99    -> "Gewitter"
+        else         -> "Unbekannt"
+    }
+}
 
 
 // -----------------------------------------------------------------------------
