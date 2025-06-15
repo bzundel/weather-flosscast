@@ -63,6 +63,107 @@
 
 \newpage
 
+\section{Projektmanagement mit Scrum \& GitHub Projects \small{(Deniz Karaman)}}
+Um unseren Entwicklungsprozess agil zu strukturieren, haben wir Scrum mithilfe von GitHub Projects implementiert. Dabei haben wir uns an klassischen Scrum-Prinzipien orientiert und diese wie üblich an unsere Teamgröße und die Projektanforderungen angepasst. Jede Story wird dabei als Issue angelegt.
+
+Zunächst haben wir in unseren Issues sowohl Labels als auch Milestones definiert, um einen schnellen Überblick zu gewährleisten und einzelne Issues entsprechend ihrer Zuordnung hervorzuheben. Da wir unsere Stories im Team abgestimmt und deren Komplexität berücksichtigt haben, gelten die Definition of Done (DoD) sowie die Bewertung als feststehend.
+
+Folgende Labels haben wir definiert: \textit{backend}, \textit{bug}, \textit{documentation}, \textit{enhancement}, \textit{epic}, \textit{frontend}, \textit{story}, \textit{testing}. Zusätzlich zu unseren Labels benötigen wir unterschiedliche Status, für die wir folgende verwenden: \textit{Todo}, \textit{In} \textit{Progress}, \textit{Needs} \textit{Review}, \textit{Done}, \textit{Canceled}.
+
+Durch die Nutzung von Custom Fields vom Typ Iteration können wir unsere Sprints zeitlich organisieren und in wöchentlichen Zyklen abbilden. Bei der Sprintplanung in unseren Meetings haben wir zudem die Möglichkeit, sowohl die Story Points als auch die Priorität (\textit{Low}, \textit{Medium}, \textit{High}, \textit{Critical}) über Custom Fields abzubilden.
+
+Nach Abschluss jedes Sprints haben wir dienstags abends wöchentlich erst eine Retrospektive und anschließend die Sprint-Planung abgehalten. Da nicht immer alle teilnehmen konnten, haben wir unsere Entwicklung in den User Stories protokolliert, um sie für alle nachvollziehbar zu machen.
+
+\subsection{Darstellung Boards}
+\begin{figure}[h]
+  \caption{Screenshot der GitHub Projects Ansicht des Backlogs}
+  \centering
+  \includegraphics[width=\textwidth]{backlog.png}
+\end{figure}
+
+Um die Übersichtlichkeit weiter zu erhöhen, haben wir für jede Board-Ansicht vordefinierte Filter konfiguriert.
+
+So erhält jede Ansicht genau die Issues, die für den jeweiligen Arbeitsschritt relevant sind, und das Team behält jederzeit den passenden Fokus.
+
+\begin{figure}[h]
+  \caption{Screenshot der GitHub Projects Ansicht der Quality Assurance}
+  \centering
+  \includegraphics[width=\textwidth]{quality_assurance.png}
+\end{figure}
+
+\begin{itemize}
+  \item \textbf{Backlog}: Alle geplanten User Stories und Tasks
+  \item \textbf{Current Sprint}: Die aktuell bearbeiteten Items
+  \item \textbf{Next Sprint}: Vorgemerkte Stories für den nächsten Sprint
+  \item \textbf{Quality Assurance}: Abgenommene Features in der Testphase
+  \item \textbf{Done}: Abgeschlossene Stories
+\end{itemize}
+
+Jeder Eintrag auf dem Board ist als GitHub Issue angelegt und hat folgende Felder
+	
+\begin{enumerate}
+  \item Story Points (zur Aufwandsschätzung in Fibonacci)
+  \item Priority-Labels (\textit{Low}, \textit{Medium}, \textit{High}, \textit{Critical})
+  \item Sprint-Labels (z. B. \textit{Sprint1}, \textit{Sprint2}, etc.)
+  \item Status-Labels (\textit{Todo}, \textit{In Progress}, \textit{Needs review}, \textit{Done}, \textit{Canceled})
+\end{enumerate}
+
+\begin{figure}[h]
+  \caption{Screenshot der GitHub Ansicht einer Story}
+  \centering
+  \includegraphics[width=.3\textwidth]{overview.png}
+\end{figure}
+
+Durch diese enge Verzahnung von Issue-Tracking, Code-Repositories und agilen Meetings erreichen wir eine hohe Transparenz, schnelle Feedback-Zyklen und eine stetige Verbesserung unseres Workflows.
+
+\section{Design \small{(Michael Filatoff)}}
+\subsection{Ablauf}
+Nachdem die Software-Requirements und User-Storys für die Wetter-App vom Product Owner und Scrum Master final definiert wurden, konnte man daraufhin mit der Software `Figma`, die eine Designsoftware ist, mehrere Mockup-Designs erstellen. Nachdem die Designs bereit waren, wurden sie dem Product Owner vorgestellt, um das Go zu erhalten. Ein paar Verbesserungen wurden ergänzt, und die finalen Designs wurden dem Entwicklungsteam übermittelt.
+
+\subsection{Software Vorstellung}
+Die folgenden Mockup-Designs wurden anhand der Requirements und mit der Hilfe der Software "Figma" erstellt. Daher ist es sinnvoll, die Software vorher zu präsentieren.
+
+Figma ist eine kollaborative Software zum Erstellen von Prototypen und Designs im Bereich UX/UI-Design. Sie eignet sich hervorragend zum Gestalten, Teilen und Testen von Designs für Webseiten und Applikationen. Sobald ein Projekt angelegt wurde, hat man die Möglichkeit, sich für einen Prototypen zu entscheiden, der die Größe bestimmt, die das Frame besitzen soll. Das Frame stellt beispielsweise bei einer Applikation das Display dar, worauf einzelne Elemente gebaut werden können und daraus ein Design entsteht. Auf der linken Seite  befindet sich das Projektverzeichnis, welches die Pages, also einzelne Seiten, besitzt, und Layers, die die einzelnen Frames beinhalten. 
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.35\textwidth]{figma_1.png}
+\caption{Figma linke Ansicht}
+\end{figure}
+
+Auf der rechten Seite befinden sich die Einstellungen für die einzelnen Frames und deren Elemente, um diese zu bearbeiten und zu designen. Außerdem hat man die Option, die Größe des Prototyps jederzeit anzupassen und das Projekt in einer Vorschau vorzustellen bzw. zu teilen oder zu exportieren.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.35\textwidth]{figma_2.png}
+\caption{Figma rechte Ansicht}
+\end{figure}
+
+\subsection{Planung}
+Die Applikation sollte schlicht, übersichtlich, benutzerfreundlich
+gestaltet sein und aus zwei Seiten bestehen. Die erste Seite hat die Funktion nach Städten bzw. Flughafen suchen zu können und diese mit den wichtigsten Informationen in der Liste darunter anzeigen zu lassen. Sobald man auf eine der Städte gedrückt hat, wird man auf die zweite Seite navigiert, die wiederum mehr Informationen bezüglich des Wetters von heute und die nächsten 7 Tage beinhaltet und bildlich darstellt, wie unter anderem der UV-Index oder die Niederschlagsmenge.
+
+\subsection{Aufbau und Layout}
+\subsubsection{Wetter Liste}
+Der Hintergrund der Liste hat die Farbe schwarz und die Schriftfarbe ist in weiß. Beginnend von oben, ist links die Überschrift Wetter und rechts ein Dropdown-Menü, welches die Möglichkeit bietet, die Grad zahl in Celsius oder Fahrenheit darzustellen. Darunter gibt es eine Suchfunktion, um eine Stadt oder Flughafen suchen zu können. Daraufhin kann der gesuchte Ort gespeichert werden, um diesen in der Liste immer anzeigen lassen zu können. Die Liste besteht aus gespeicherten Orten, die die wichtigsten Informationen bezüglich des Wetters von heute darstellen. Sobald man auf einen der Orte drückt, expandiert sich das Fenster und eine vergrößerte Ansicht mit Informationen des Wetters, von heute und in den nächsten 7 Tage, wird angezeigt. 
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.35\textwidth]{wetterliste.png}
+\caption{Wetter Liste}
+\end{figure}
+
+\subsubsection{Wetter Vorhersage}
+Sobald man sich für ein Ort entschieden hat, entsteht eine vergrößerte Ansicht des Ortes mit passendem Hintergrund und Bild, welche abhängig von der Wetterlage ist. Es gibt drei Ansichten. Die erste stellt ein sonniges und die zweite ein regnerisches Wetter da. Die dritte stellt das Wetter beim Schneefall dar. Somit wird das derzeitige Wetterverhältnis bereits mit dem Bild ganz oben dargestellt mit zusätzlichen Informationen, wie der Ortsname, Ortsgrad, Ortswetter und die Höchst- bzw. Tiefst- Temperatur. Darunter befindet sich eine Box, die die Wettervorhersage stündlich für den heutigen Tag mit Bild und Grad ausgibt. Ähnlich ist es bei der zweiten Box, die wiederum das Wetter für die gesamte Woche mit Bild und Höchst- bzw. Tiefst- Temperatur darstellt. Für zusätzliche Informationen scrollt man nach unten und findet den UV-Index, die Windstärke bzw. Richtung und falls es Niederschlag gibt, die mm Anzahl.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.3\textwidth]{wetter_sonnig.png}\hfill
+\includegraphics[width=0.3\textwidth]{wetter_regen.png}\hfill
+\includegraphics[width=0.3\textwidth]{wetter_schnee.png}
+\caption{Wetter Vorhersagen}
+\end{figure}
+
 \section{Product ownership \small{(Alwin Zimmermann)}}
 \subsection{Aufgaben des Product Owners}
 In der Rolle des Product Owners war es erforderlich, eine präzise Definition des Projekts zu formulieren. Von entscheidender Bedeutung war die Erstellung von Anforderungen sowie die Ausarbeitung der verschiedenen User-Stories . Das Produkt muss den Erwartungen der Stakeholder entsprechen. Die Pflege des Backlogs zählt ebenfalls zu den Aufgaben des Product Owners, um den Fortschritt des Projekts zu dokumentieren.
@@ -136,31 +237,31 @@ Um eine klare Übersicht zu gewährleisten, sind die wichtigsten Metadaten der U
 \setlength{\LTpre}{0pt} % Kein zusätzlicher Platz vor der longtable
 \setlength{\LTpost}{0pt} % Kein zusätzlicher Platz nach der longtable
 
-\small % Makes the text in the table slightly smaller
-\begin{longtable}{|>{\RaggedRight}X|c|c|}
-\hline
-\textbf{Beschreibung} & \textbf{US} & \textbf{Priorität} \\
-\hline
-\endhead % End of the table header (repeated on each page)
-
-\hline
-\multicolumn{3}{|r|}{Fortsetzung auf nächster Seite} \\
-\hline
-\endfoot % Footer for page breaks
-
-\hline
-\endlastfoot % Footer for the end of the table
-
-Als Nutzer möchte ich beim Öffnen der App das aktuelle Wetter für meinen Standort sehen. & US-001 & Hoch \\
-Als Nutzer möchte ich nach Städten suchen und sie einer Liste hinzufügen können. & US-002 & Hoch \\
-Als Nutzer möchte ich das Wetter der zukünftigen Tage an meinem Standort sehen. & US-003 & Hoch \\
-Als Nutzer möchte ich das zukünftige Wetter von gespeicherten Städten sehen. & US-004 & Hoch \\
-Als Nutzer möchte ich Städte aus meiner Liste löschen können. & US-005 & Hoch \\
-Als Nutzer möchte ich auch ohne Internet das letzte aktuelle Wetter an meinem Standort sehen. & US-006 & Mittel \\
-Als Nutzer möchte ich auch ohne Internet das Wetter aus zuvor hinzugefügten Städten sehen. & US-007 & Mittel \\
-Als Nutzer möchte ich eine Fehlermeldung sehen, wenn ich kein Internet habe. & US-008 & Mittel \\
-Als Nutzer möchte ich eine Hilfefunktion und ein Impressum in der App finden. & US-009 & Niedrig \\
-\end{longtable}
+%\small % Makes the text in the table slightly smaller
+%\begin{longtable}{|>{\RaggedRight}X|c|c|}
+%\hline
+%\textbf{Beschreibung} & \textbf{US} & \textbf{Priorität} \\
+%\hline
+%\endhead % End of the table header (repeated on each page)
+%
+%\hline
+%\multicolumn{3}{|r|}{Fortsetzung auf nächster Seite} \\
+%\hline
+%\endfoot % Footer for page breaks
+%
+%\hline
+%\endlastfoot % Footer for the end of the table
+%
+%Als Nutzer möchte ich beim Öffnen der App das aktuelle Wetter für meinen Standort sehen. & US-001 & Hoch \\
+%Als Nutzer möchte ich nach Städten suchen und sie einer Liste hinzufügen können. & US-002 & Hoch \\
+%Als Nutzer möchte ich das Wetter der zukünftigen Tage an meinem Standort sehen. & US-003 & Hoch \\
+%Als Nutzer möchte ich das zukünftige Wetter von gespeicherten Städten sehen. & US-004 & Hoch \\
+%Als Nutzer möchte ich Städte aus meiner Liste löschen können. & US-005 & Hoch \\
+%Als Nutzer möchte ich auch ohne Internet das letzte aktuelle Wetter an meinem Standort sehen. & US-006 & Mittel \\
+%Als Nutzer möchte ich auch ohne Internet das Wetter aus zuvor hinzugefügten Städten sehen. & US-007 & Mittel \\
+%Als Nutzer möchte ich eine Fehlermeldung sehen, wenn ich kein Internet habe. & US-008 & Mittel \\
+%Als Nutzer möchte ich eine Hilfefunktion und ein Impressum in der App finden. & US-009 & Niedrig \\
+%\end{longtable}
 
 \normalsize
 \subsection{Detaillierte User Story Beschreibungen}
