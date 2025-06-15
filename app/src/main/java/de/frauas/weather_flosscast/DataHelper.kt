@@ -191,7 +191,7 @@ private fun downloadForecast(latitude: Double, longitude: Double): Forecast {
 }
 
 // exposed function to get forecast from cache or api
-suspend fun getForecastFromCacheOrDownload(appDir: File, latitude: Double, longitude: Double): Forecast {
+suspend fun getForecastFromCacheOrDownload(appDir: File, latitude: Double, longitude: Double, forceUpdate: Boolean = false): Forecast {
     return withContext(Dispatchers.IO) {
         val cacheFile: File = File(appDir, "cache.json")
 
@@ -247,7 +247,7 @@ suspend fun getForecastFromCacheOrDownload(appDir: File, latitude: Double, longi
             logger.info { "Successfully deserialized cached forecast" }
 
             // check if cache value is older than an hour
-            if (shouldUpdateCache(cacheForecast.timestamp)) {
+            if (shouldUpdateCache(cacheForecast.timestamp) || forceUpdate) {
                 // update cached value
                 val currentForecast: Forecast = downloadForecast(latitude, longitude)
                 val currentForecastJson = serializeForecast(currentForecast)
