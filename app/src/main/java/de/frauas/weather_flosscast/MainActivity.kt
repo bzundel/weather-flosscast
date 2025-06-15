@@ -61,8 +61,10 @@ fun AppNavHost(startDestination: String) {
             SearchScreen(
                 onCitySelected = { city ->
                     // wenn Karte angeklickt, navigiere zu WeatherScreen mit city als Argument
-                    navController.navigate("weather/${city}")
-                }
+                    navController.navigate("weather/${city}") /*{
+                        popUpTo("search") { inclusive = true }      //If you want to remove backstack-tracing
+                        launchSingleTop = true
+                    }*/                }
             )
         }
         // 3) WeatherScreen-Route mit Argument "city"
@@ -72,7 +74,12 @@ fun AppNavHost(startDestination: String) {
                 type = NavType.StringType
             })
         ) { backStackEntry -> val city = backStackEntry.arguments?.getString("cityName") ?: ""
-            WeatherScreen(city, onBack   = { navController.navigate("search")}) // zurück zur SearchScreen
+            WeatherScreen(city, onBack = {          //Go back to Search-Screen without backstack-tracing further-on
+                navController.navigate("search") {
+                    popUpTo("weather/{cityName}") { inclusive = true }
+                    launchSingleTop = true
+                }
+            })
         }
     }
 }

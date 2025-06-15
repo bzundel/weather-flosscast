@@ -79,7 +79,7 @@ val bgC = colorForBackground("regen")
 fun WeatherScreen(cityName : String, onBack: () -> Unit) {
     val context = LocalContext.current  // Safe save for app context for Compose
 
-    val city = CityList.getCities(context).find { it.cityName == cityName } //Getting cityData from CityList with find function
+    var city = CityList.getCities(context).find { it.cityName == cityName } //Getting cityData from CityList with find function
     var forecast by remember { mutableStateOf<Forecast?>(null) }            //Stores the forecast state and recomposition when updated
 
 
@@ -91,7 +91,7 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
     LaunchedEffect(cityName) {
         if (city != null) {
             forecast =
-                getForecastFromCacheOrDownload(context.filesDir, city.latitude, city.longitude)
+                getForecastFromCacheOrDownload(context.filesDir, city!!.latitude, city!!.longitude)
 
         }
         if (city == null) {
@@ -111,7 +111,7 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
         onRefresh = {
             scope.launch {
                 isRefreshing = true
-                TODO()
+                forecast = loadForecastsForCities(context, CityList.getCities(context))[cityName]
                 Toast.makeText(context, "Daten aktualisiert", Toast.LENGTH_SHORT).show()
                 delay(1000)
                 isRefreshing = false
@@ -149,7 +149,7 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
 
         // 4) the 4 infoboxes
         item {
-            InfoBoxesSection()
+            InfoBoxesSection(forecast)
         }
 
         // button for debugging
@@ -321,32 +321,6 @@ fun HourlyItem(forecast : Forecast?, hour : Int) {
     }
 }
 
-data class HourlyData(val hour: Int, val state : Int, val temp: Int)//Dataconstruct for HourlyData
-fun Forecast.getHourlyData(hour: Int): HourlyData? {
-    val timeZone = TimeZone.currentSystemDefault()
-
-    // JNow-Timezone data
-    val nowInstant = Clock.System.now()
-
-    // +hour adding for different data
-    val targetInstant = nowInstant.plus(hour.hours)
-
-    // Converting to local data
-    val targetDateTime = targetInstant.toLocalDateTime(timeZone)
-
-    // Setting today as val
-    val targetDay = days.firstOrNull { it.date == targetDateTime.date } ?: return null
-
-    // Setting hour as val
-    val hourly = targetDay.hourlyValues.firstOrNull { it.dateTime.hour == targetDateTime.hour } ?: return null
-
-    return HourlyData(
-        hour = targetDateTime.hour, //Taking the right values from set values
-        state = hourly.weatherCode,
-        temp = hourly.temperature.roundToInt()
-    )
-}
-
 // -----------------------------------------------------------------------------
 //weekly
 // -----------------------------------------------------------------------------
@@ -419,7 +393,7 @@ fun DailyItem(forecast: Forecast?, day : Int) {
             modifier = Modifier.size(10.dp)
         )
         Text(
-            text = " " + DailyData?.rain.toString(),     //Rain probability
+            text = " " + DailyData?.rain.toString() + " %",     //Rain probability
             style = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
             modifier = Modifier.weight(1f)
         )
@@ -458,43 +432,11 @@ fun DailyItem(forecast: Forecast?, day : Int) {
     }
 }
 
-//Getting data for DailyItem List
-data class DailyData(val dayLabel : String, val state : Int, val rain : Int, val max: Int, val min: Int)
-fun Forecast.getDailyData(day: Int): DailyData {
-    if (day >= days.size) return DailyData("Unbekannt", 0, 0, 0, 0)
-
-    val targetDay = days[day]
-    val date = targetDay.date
-
-    val weekdayLabel = if (day == 0) "Heute" else when (date.dayOfWeek) {
-        DayOfWeek.MONDAY    -> "Montag"
-        DayOfWeek.TUESDAY   -> "Dienstag"
-        DayOfWeek.WEDNESDAY -> "Mittwoch"
-        DayOfWeek.THURSDAY  -> "Donnerstag"
-        DayOfWeek.FRIDAY    -> "Freitag"
-        DayOfWeek.SATURDAY  -> "Samstag"
-        DayOfWeek.SUNDAY    -> "Sonntag"
-    }
-
-    val weatherCode = targetDay.hourlyValues.firstOrNull()?.weatherCode ?: 0
-    val rainAmount = targetDay.hourlyValues.maxOfOrNull { it.precipitationProbability } ?: 0
-    val maxTemp = targetDay.hourlyValues.maxOfOrNull { it.temperature }?.roundToInt() ?: 0
-    val minTemp = targetDay.hourlyValues.minOfOrNull { it.temperature }?.roundToInt() ?: 0
-
-    return DailyData(
-        dayLabel = weekdayLabel,
-        state = weatherCode,
-        rain = rainAmount,
-        max = maxTemp,
-        min = minTemp
-    )
-}
-
 // -----------------------------------------------------------------------------
 //info-boxes
 // -----------------------------------------------------------------------------
     @Composable
-    fun InfoBoxesSection() {
+    fun InfoBoxesSection(forecast: Forecast?) {
         Spacer(modifier = Modifier.height(16.dp))
         Row(
             modifier = Modifier
@@ -525,16 +467,12 @@ fun Forecast.getDailyData(day: Int): DailyData {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "UV-INDEX",
+                        text = "Luftfeuchtigkeit",
                         style = MaterialTheme.typography.titleSmall.copy(color = Color.White)
                     )
                     Text(
-                        text = "5",
+                        text = forecast?.days?.firstOrNull()?.hourlyValues?.firstOrNull()?.relativeHumidity.toString() + " %",
                         style = MaterialTheme.typography.displaySmall.copy(color = Color.White)
-                    )
-                    Text(
-                        text = "Den restlicher Tag Mittel",
-                        style = MaterialTheme.typography.bodySmall.copy(color = Color.White)
                     )
                 }
             }
@@ -564,11 +502,11 @@ fun Forecast.getDailyData(day: Int): DailyData {
                         style = MaterialTheme.typography.titleSmall.copy(color = Color.White)
                     )
                     Text(
-                        text = "0 mm",
+                        text = forecast?.days?.firstOrNull()?.hourlyValues?.maxOfOrNull { it.rain }?.roundToInt().toString() + " mm",
                         style = MaterialTheme.typography.displaySmall.copy(color = Color.White)
                     )
                     Text(
-                        text = "0 mm morgen erwartet",
+                        text = forecast?.days?.getOrNull(1)?.hourlyValues?.maxOfOrNull { it.rain }?.roundToInt().toString() + " mm morgen erwartet",
                         style = MaterialTheme.typography.bodySmall.copy(color = Color.White)
                     )
                 }
@@ -583,7 +521,7 @@ fun Forecast.getDailyData(day: Int): DailyData {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Box 3: Wind
-            Box(
+           /* Box(
                 modifier = Modifier
                     .weight(1f)
                     .height(120.dp)
@@ -617,7 +555,7 @@ fun Forecast.getDailyData(day: Int): DailyData {
                         style = MaterialTheme.typography.bodySmall.copy(color = Color.White)
                     )
                 }
-            }
+            }*/ //Can be used later
 
             // Box 4:
             Box(

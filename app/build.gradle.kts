@@ -63,6 +63,7 @@ dependencies {
     implementation("io.github.oshai:kotlin-logging-jvm:7.0.3")
     implementation("org.slf4j:slf4j-android:1.7.36")
     implementation ("com.google.code.gson:gson:2.10.1")
+    implementation("com.valentinilk.shimmer:compose-shimmer:1.0.5")
     implementation(libs.androidx.benchmark.macro)
     implementation(libs.androidx.navigation.common.android)
     implementation(libs.androidx.navigation.compose.android)

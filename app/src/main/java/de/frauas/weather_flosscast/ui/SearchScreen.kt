@@ -35,6 +35,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.platform.LocalContext
@@ -55,6 +56,9 @@ import kotlin.math.roundToInt
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import com.valentinilk.shimmer.ShimmerBounds
+import com.valentinilk.shimmer.rememberShimmer
+import com.valentinilk.shimmer.shimmer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.toJavaLocalDate
@@ -65,41 +69,36 @@ import kotlinx.datetime.toJavaLocalDate
 @Composable
 fun SearchScreen(onCitySelected: (String) -> Unit,) {
 
-    val context = LocalContext.current  // Safe save for app context for Compose
-    var inputText by remember { mutableStateOf("") }    //updates directly
-    var query by remember { mutableStateOf("") } // updates only after clicking
-
-    var isRefreshing by remember { mutableStateOf(false) }// Pull-to-Refresh state
-    val scope      = rememberCoroutineScope()
-    val swipeState = rememberSwipeRefreshState(isRefreshing)
-
-    // List of saved citys
-    val savedCities = CityList.getCities(context).filter { it.cityName.contains(query, ignoreCase = true) }
-    // Map of forecasts by citynames
+    //Values
+    val context = LocalContext.current
+    var inputText by remember { mutableStateOf("") }
+    var query by remember { mutableStateOf("") }
+    var savedCities by remember { mutableStateOf(CityList.getCities(context).filter { it.cityName.contains(query, ignoreCase = true) }) }
     var forecasts by remember { mutableStateOf<Map<String, Forecast>>(emptyMap()) }
+    var isRefreshing by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(true) } // NEW: Loading state
+    val scope = rememberCoroutineScope()
+    val swipeState = rememberSwipeRefreshState(isRefreshing)
+    val shimmerInstance = rememberShimmer(shimmerBounds = ShimmerBounds.Window)
 
-    // Initial load the forecasts//
-    LaunchedEffect(savedCities) { forecasts = loadForecastsForCities(context, savedCities) }
+    // Loading the forecasts, isLoading true for shimmer-Effect
+    LaunchedEffect(savedCities) {
+        isLoading = true
+        forecasts = loadForecastsForCities(context, savedCities)
+        isLoading = false
+    }
 
-
-    /**
-     * Layout + in topBar: Heading "Wetter"
-     */
-    Scaffold(//Scaffold is a basic structure for building user interfaces
+    Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(text = "Wetter", color = Color.White, fontSize = 25.sp) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black)
             )
         },
-        modifier = Modifier.background(Color.Black)  // background = black
-    ) {
-        paddingValues->
-
-        // SwipeRefresh component over the rest of the components
-        // It refreshed the forecast-data when swiping down with indicator
+        modifier = Modifier.background(Color.Black)
+    ) { paddingValues ->
         SwipeRefresh(
-            state     = swipeState,
+            state = swipeState,
             onRefresh = {
                 scope.launch {
                     isRefreshing = true
@@ -111,52 +110,83 @@ fun SearchScreen(onCitySelected: (String) -> Unit,) {
             },
             indicator = { state, trigger ->
                 SwipeRefreshIndicator(
-                    state                   = state,
-                    refreshTriggerDistance  = trigger,
-                    backgroundColor         = Color.DarkGray,
-                    contentColor            = Color.White
+                    state = state,
+                    refreshTriggerDistance = trigger,
+                    backgroundColor = Color.DarkGray,
+                    contentColor = Color.White
                 )
             },
-            modifier = Modifier.fillMaxSize().background(Color.Black).padding(paddingValues)
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .padding(paddingValues)
         ) {
-            // Column for all components: searchbar and list of citys
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().background(Color.Black).padding(horizontal = 16.dp)
-            ) {
-                item {
-                    //1) Searchfield with icon-button
-                    TextField(
-                        value = inputText,
-                        onValueChange = { inputText = it },
-                        placeholder = { Text("Stadt oder Flughafen suchen", color = Color.Gray) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth().height(56.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(// reacts to enter
-                            onSearch = {
-                                query = inputText
-                                inputText = ""
+            if (isLoading) {        //If the weather Data is still loading -> show shimmer effect first, then show results
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                ) {
+                    repeat(5) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp)
+                                .padding(vertical = 8.dp)
+                                .shimmer(shimmerInstance)
+                                .background(Color.DarkGray, shape = RoundedCornerShape(15.dp))
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black)
+                        .padding(horizontal = 16.dp)
+                ) {
+                    item {
+                        TextField(
+                            value = inputText,
+                            onValueChange = { inputText = it },
+                            placeholder = { Text("Stadt oder Flughafen suchen", color = Color.Gray) },
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
+                            keyboardActions = KeyboardActions(
+                                onSearch = {
+                                    query = inputText
+                                    inputText = ""
+                                }
+                            ),
+                            trailingIcon = {
+                                IconButton(onClick = {
+                                    query = inputText
+                                    inputText = ""
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Search,
+                                        contentDescription = "Suchen",
+                                        tint = Color.Black
+                                    )
+                                }
                             }
-                        ),
-                        trailingIcon = {
-                            IconButton(onClick = {
-                                query = inputText //reacts on search button too
-                                inputText = "" //Empties search field
-
-                            }) {
-                                Icon(
-                                    imageVector = Icons.Default.Search,
-                                    contentDescription = "Suchen",
-                                    tint = Color.Black
-                                )
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        CityListView(
+                            context = context,
+                            query = query,
+                            onCitySelected = onCitySelected,
+                            cities = savedCities,
+                            forecasts = forecasts,
+                            onCityDeleted = {
+                                savedCities = CityList.getCities(context)
                             }
-                        }
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    //2) Drawing the city-lists
-                    CityListView(context = context, query = query, onCitySelected = onCitySelected,cities = savedCities, forecasts=forecasts)
+                        )
+                    }
                 }
             }
         }
@@ -174,7 +204,8 @@ fun CityListView(
     query: String,
     cities: List<City>,
     forecasts: Map<String, Forecast>,
-    onCitySelected: (String) -> Unit
+    onCitySelected: (String) -> Unit,
+    onCityDeleted: () -> Unit
 ) {
     //1. Show searched/new cities
     var searchResults by remember { mutableStateOf<List<City>>(emptyList()) }
@@ -216,6 +247,7 @@ fun CityListView(
                 TextButton(
                     onClick = {
                         CityList.removeCity(context, cityToDelete!!)
+                        onCityDeleted() // Liste neu laden
                         cityToDelete = null },
                     ) { Text("Löschen") } },
             dismissButton    = { TextButton(onClick = { cityToDelete = null }) { Text("Abbrechen") } }
@@ -229,7 +261,10 @@ fun CityListView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .combinedClickable(
-                        onClick = { onCitySelected(city.cityName) },
+                        onClick = {
+                            CityList.addCity(context, city)
+                            onCitySelected(city.cityName)
+                        },
                         onLongClick = { cityToDelete = city }
                     )
             ) {
@@ -259,7 +294,7 @@ fun NewCityCard(
             .height(80.dp)
             .clickable {
                 scope.launch {
-                    try{
+                    try {
                         // 1) Versuch, Forecast zu laden
                         getForecastFromCacheOrDownload(
                             context.filesDir,
@@ -275,7 +310,8 @@ fun NewCityCard(
                         ).show()
                         CityList.addCity(context, city)               //  Add city to saved list
                         onCitySelected(city.cityName)                 //  Notify NavHost
-                        Toast.makeText(context, "${city.cityName} hinzugefügt", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "${city.cityName} hinzugefügt", Toast.LENGTH_SHORT)
+                            .show()
 
                     } catch (e: Exception) {
                         // 3) wenn fehlschlägt, nur Toast
@@ -287,12 +323,14 @@ fun NewCityCard(
                             )
                             .show()
                     }
-            }
+                }
             },
         colors = CardDefaults.cardColors(containerColor = Color.DarkGray)
     ) {
         Column(
-            modifier = Modifier.weight(1f).padding(16.dp)
+            modifier = Modifier
+                .weight(1f)
+                .padding(16.dp)
         ) {
             Text(
                 text = city.cityName,   //Cityname on the cards with new cities
@@ -400,13 +438,9 @@ fun CityCard(
                     Text(
                         text = forecast?.timestamp?.let { ts ->
                             // 1) Datum formatieren
-                            val date = ts.date
-                                .toJavaLocalDate()
-                                .format(DateTimeFormatter.ofPattern("dd.MM"))
+                            val date = ts.date.toJavaLocalDate().format(DateTimeFormatter.ofPattern("dd.MM"))
                             // 2) Uhrzeit formatieren
-                            val time = ts.time
-                                .toJavaLocalTime()
-                                .format(DateTimeFormatter.ofPattern("HH:mm"))
+                            val time = ts.time.toJavaLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"))
                             // 3) beides zu einem String zusammenfügen
                             "$date, $time"
                         } ?: "--",  // falls forecast oder timestamp null ist
@@ -421,7 +455,7 @@ fun CityCard(
             Column (){
                 //current temperature
                 Text(
-                    text = "${forecast?.getCurrentTemperature()}" + "°",
+                    text = "${forecast?.getCurrentTemperature() ?: "-"}" + "°",
                     style = MaterialTheme.typography.titleMedium,
                     fontSize = 25.sp,
                     color = Color.White
@@ -438,46 +472,6 @@ fun CityCard(
         }
     }
 }
-
-/**
- * Function to get the current temperature
- */
-fun Forecast.getCurrentTemperature(): Int? {//Utility function to update newest temperature
-    val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-    val today = now.date
-    val currentHour = now.hour
-
-    val todayForecast = this.days.firstOrNull { it.date == today } ?: return 0
-
-    return todayForecast.hourlyValues.firstOrNull { it.dateTime.hour == currentHour }?.temperature?.roundToInt()
-}
-/**
- * Function to get the daily min temperature
- */
-fun Forecast.getDailyMinTemp(): Int {
-
-    val allTemps = mutableListOf<Double>()
-
-    for (daily in days) {
-        // add all temps to the list
-        allTemps.addAll(daily.hourlyValues.map { it.temperature })
-    }
-    return allTemps.minOrNull()?.roundToInt() ?: 0
-}
-/**
- * Function to get the daily max temperature
- */
-fun Forecast.getDailyMaxTemp(): Int {
-
-    val allTemps = mutableListOf<Double>()
-
-    for (daily in days) {
-        // add all temps to the list
-        allTemps.addAll(daily.hourlyValues.map { it.temperature })
-    }
-    return allTemps.maxOrNull()?.roundToInt() ?: 0
-}
-
 
 /**
  * Function for get the right color of the seperate city-cards
@@ -530,25 +524,4 @@ fun getIconForWmoCode(code: Int, isNight: Boolean): Int {
             else                               -> R.drawable.cloud         // Nebel, Staub, sonstige Wolken
         }
     }
-}
-
-
-/**
- * Loads for all `cities` the forecast out of cache or download and gives a map back with the key cityName.
- */
-suspend fun loadForecastsForCities(
-    context: Context,
-    cities: List<City>
-): Map<String, Forecast> {
-    val appDir = context.filesDir
-    val result = mutableMapOf<String, Forecast>()
-    for (city in cities) {
-        try {
-            val fc = getForecastFromCacheOrDownload(appDir, city.latitude, city.longitude)
-            result[city.cityName] = fc
-        } catch (_: Exception) {
-            // Fehler pro Stadt ignorieren
-        }
-    }
-    return result
 }
