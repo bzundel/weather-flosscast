@@ -84,7 +84,7 @@ fun SearchScreen(onCitySelected: (String) -> Unit,) {
     // Loading the forecasts, isLoading true for shimmer-Effect
     LaunchedEffect(savedCities) {
         isLoading = true
-        forecasts = loadForecastsForCities(context, savedCities)
+        forecasts = loadForecastsForCities(context, savedCities,false)
         isLoading = false
     }
 
@@ -102,7 +102,7 @@ fun SearchScreen(onCitySelected: (String) -> Unit,) {
             onRefresh = {
                 scope.launch {
                     isRefreshing = true
-                    forecasts = loadForecastsForCities(context, savedCities)
+                    forecasts = loadForecastsForCities(context, savedCities,true)
                     Toast.makeText(context, "Daten aktualisiert", Toast.LENGTH_SHORT).show()
                     delay(1000)
                     isRefreshing = false
