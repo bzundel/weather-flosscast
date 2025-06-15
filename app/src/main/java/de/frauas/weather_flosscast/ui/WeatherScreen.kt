@@ -57,29 +57,57 @@ import java.time.LocalDateTime
 // function for select the background-colour
 // -----------------------------------------------------------------------------
 
-private fun colorForBackground(condition: String): Color {
-    return when (condition.lowercase()) {
-        "regen", "regnerisch", "niesel" -> Color(0xFF808080)   // Dunkelgrau
-        "sonnig", "klar", "heiter"        -> Color(0xFF33AAFF)   // Blau
-        "schnee", "schneeschauer"         -> Color(0xFFB0BEC5)   // Hellgrau
-        else                               -> Color(0xFF546E7A)   //
+private fun colorForBackground(code: Int, isNight: Boolean): Color {
+    return if (isNight) {
+        // Color for nighttime:
+        Color(0xFF37474F)// Very dark grayish blue
+    } else {
+        // Colors for daytime:
+        // 0xFF33AAFF -> Vivid blue for clear sky
+        // 0xFF808080 -> Dark gray for rain or storm
+        // 0xFFB0BEC5 -> Grayish blue for snow or clouds
+        when (code) {
+            0                                                                         -> Color(0xFF33AAFF) // Vivid blue
+            in 1..9, in 10..19, in 30..49,in 70..79            -> Color(0xFFB0BEC5) // Grayish blue
+            in 20..29, in 50..59, in 60..69, in 80..99         -> Color(0xFF808080) // Dark gray
+            else                                                                      -> Color(0xFFB0BEC5) // Fallback Grayish blue
+        }
     }
 }
 
-//einstellen hintergrund und name
-val bgC = colorForBackground("regen")
-//val cityName = "Offenbach"
+/**
+ * Liest aus dem Forecast den WMO-Code der ersten Stunde und
+ * bestimmt, ob es gerade Nacht ist.
+ *
+ * @param forecast das Forecast-Objekt
+ * @return Pair( WMO-Code , isNight )
+ */
+private fun getWmoCodeAndIsNight(forecast: Forecast?): Pair<Int, Boolean> {
+    // 1) Erstes Tages-Objekt
+    val today = forecast?.days?.firstOrNull() ?: return 0 to false
+
+    // 2) Tag/Nacht-Berechnung
+    val sunrise = LocalDateTime.parse(today.sunrise.toString())
+    val sunset  = LocalDateTime.parse(today.sunset.toString())
+    val now     = LocalDateTime.now()
+    val isNight = now.isBefore(sunrise) || now.isAfter(sunset)
+
+    // 3) WMO-Code der ersten Stunde (oder 0 fallback)
+    val wmoCode = today.hourlyValues.firstOrNull()?.weatherCode ?: 0
+
+    return wmoCode to isNight
+}
+
+
 // -----------------------------------------------------------------------------
 // Screen complete
 // -----------------------------------------------------------------------------
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeatherScreen(cityName : String, onBack: () -> Unit) {
     val context = LocalContext.current  // Safe save for app context for Compose
 
-    var city = CityList.getCities(context).find { it.cityName == cityName } //Getting cityData from CityList with find function
+    val city = CityList.getCities(context).find { it.cityName == cityName } //Getting cityData from CityList with find function
     var forecast by remember { mutableStateOf<Forecast?>(null) }            //Stores the forecast state and recomposition when updated
 
 
@@ -104,6 +132,15 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     val lifecycleOwner = LocalLifecycleOwner.current    //Debugging
     val filesDir = LocalContext.current.filesDir        //Debugging
+
+
+
+    // 2)
+    val (wmoCode, isNight) = getWmoCodeAndIsNight(forecast)
+
+    // 3) Hintergrundfarbe
+    val bgC = colorForBackground(wmoCode, isNight)
+
 // SwipeRefresh component over the rest of the components
     // It refreshed the forecast-data when swiping down with indicator
     SwipeRefresh(
@@ -199,7 +236,7 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
 
 
 
-    Box(modifier = Modifier.fillMaxWidth().height(200.dp).background(bgC)) {
+    Box(modifier = Modifier.fillMaxWidth().height(200.dp)) {
 
         Row(modifier = Modifier.fillMaxSize().padding(start = 32.dp),
             horizontalArrangement = Arrangement.Center,
@@ -306,9 +343,13 @@ fun HourlyItem(forecast : Forecast?, hour : Int) {
         )
         Spacer(modifier = Modifier.height(17.dp))
 
+
+        val (wmoCode, isNight) = getWmoCodeAndIsNight(forecast)
+        val iconRes = getIcoForWmoCode(wmoCode, isNight)
+
         // ADD IMAGE
         Image(
-            painter = painterResource(id = R.drawable.rain),
+            painter = painterResource(id = iconRes),
             contentDescription = "",
             modifier = Modifier.size(22.dp)
         )
@@ -399,9 +440,11 @@ fun DailyItem(forecast: Forecast?, day : Int) {
         )
         Spacer(modifier = Modifier.width(30.dp))
 
+        val (wmoCode, isNight) = getWmoCodeAndIsNight(forecast)
+        val iconRes = getIcoForWmoCode(wmoCode, isNight)
 
         Image(
-            painter = painterResource(id = R.drawable.cloud_sun),//weatherIconResForCode(weatherCode) ICON
+            painter = painterResource(id = iconRes),//weatherIconResForCode(weatherCode) ICON
             contentDescription = "",
             modifier = Modifier.size(25.dp)
         )
@@ -654,6 +697,37 @@ fun getConditionForWmoCode(code: Int): String {
         in 85..86    -> "Schneeschauer"
         in 95..99    -> "Gewitter"
         else         -> "Unbekannt"
+    }
+}
+/**
+ * Function for get the right icon based on weather-code and if its night or not
+ */
+@DrawableRes
+fun getIcoForWmoCode(code: Int, isNight: Boolean): Int {
+    return if (isNight) {
+        when (code) {
+            0                                  -> R.drawable.monn          // klarer Himmel
+            in 1..3                      -> R.drawable.cloud_moon    // Wolkenauf-/-abbau
+            13, 17, 19, in 90..99        -> R.drawable.storm         // Gewitter/Trichterwolke
+            in 23..24, 26                -> R.drawable.snowrain      // Schneeregen / gefrierender Niederschlag
+            22, in 70..79                -> R.drawable.snow          // Schnee / Schneeschauer
+            in 20..21, 25,
+            in 50..59, in 60..69,
+            in 80..89                    -> R.drawable.rain          // Drizzle / Rain / Showers
+            else                               -> R.drawable.cloud_moon    // Nebel, Staub, sonstige Wolken
+        }
+    } else {
+        when (code) {
+            0                                  -> R.drawable.sun           // klarer Himmel
+            in 1..3                      -> R.drawable.cloud_sun     // Wolkenauf-/-abbau
+            13, 17, 19, in 90..99        -> R.drawable.storm         // Gewitter/Trichterwolke
+            in 23..24, 26                -> R.drawable.snowrain      // Schneeregen / gefrierender Niederschlag
+            22, in 70..79                -> R.drawable.snow          // Schnee / Schneeschauer
+            in 20..21, 25,
+            in 50..59, in 60..69,
+            in 80..89                    -> R.drawable.rain          // Drizzle / Rain / Showers
+            else                               -> R.drawable.cloud         // Nebel, Staub, sonstige Wolken
+        }
     }
 }
 
