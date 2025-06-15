@@ -139,7 +139,7 @@ fun Forecast.getWmoCodeAndIsNight(): Pair<Int, Boolean> {
 /**
  * Loads for all `cities` the forecast out of cache or download and gives a map back with the key cityName.
  */
-suspend fun loadForecastsForCities(context: Context,cities: List<City>,forceRefresh: Boolean): Map<String, Forecast> {
+suspend fun loadForecastsForCities(context: Context,cities: List<City>,forceRefresh : Boolean): Map<String, Forecast> {
     val appDir = context.filesDir
     val result = mutableMapOf<String, Forecast>()
     for (city in cities) {

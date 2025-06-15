@@ -95,7 +95,7 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
         onRefresh = {
             scope.launch {
                 isRefreshing = true
-                forecast = loadForecastsForCities(context, CityList.getCities(context))[cityName]
+                forecast = loadForecastsForCities(context, CityList.getCities(context), true)[cityName]
                 Toast.makeText(context, "Daten aktualisiert", Toast.LENGTH_SHORT).show()
                 delay(1000)
                 isRefreshing = false
