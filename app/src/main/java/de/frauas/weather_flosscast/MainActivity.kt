@@ -20,53 +20,63 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                //Checking, if the CityList is Empty
-                if(CityList.getCities(this).isEmpty()){
-                    //Toast.makeText(this, "Bitte zuerst ein Ort hinzufügen", Toast.LENGTH_SHORT).show()    //Toast for debugging
-
-                    AppNavHost("search")                                                 //if empty, show SearchScreen
-                }else{
-                    AppNavHost("weather/${CityList.getCities(this).first().cityName}")  //if not empty, show WeatherScreen of the first City on the CityList
-                }
+                AppNavHost(
+                    startCity = CityList.getCities(this).firstOrNull()?.cityName
+                )
             }
         }
     }
 }
 @Composable
-fun AppNavHost(startDestination: String) {
-    // 1) Erzeuge einen NavController
+fun AppNavHost(startCity: String?) {
     val navController = rememberNavController()
+
     NavHost(
         navController = navController,
-        startDestination = startDestination    // Startscreen
+        startDestination = "start"
     ) {
-        // 2) SearchScreen-Route
-        composable("search") {
+        // Not visible start point -> shows the next direction Searchscreen or Weather Screen
+        composable("start") {
+            LaunchedEffect(Unit) {
+                if (startCity != null) {        //If there are cities on the List, put Search Screen first in the backstack and go to the city then
+                    navController.navigate("search") {
+                        launchSingleTop = true
+                    }
+                    navController.navigate("weather/$startCity") {
+                        launchSingleTop = true
+                    }
+                } else {    //if the list is emty, just go to the search screen
+                    navController.navigate("search") {
+                        popUpTo("start") { inclusive = true }
+                    }
+                }
+            }
+        }
+
+        composable("search") {  //SearchScreen navigation. If there is a city Select, go to WeatherScreen with City Name
             SearchScreen(
-                onCitySelected = { city ->                      // wenn Karte angeklickt, navigiere zu WeatherScreen mit city als Argument
-                    navController.navigate("weather/${city}"){
-                        popUpTo("search"){inclusive = false}    //backstack-tracing is ON
-                        launchSingleTop = false                  //if true, if search is on top, the NavController will not push a new instance onto the back-stack
-                    }},
-                    navController = navController               //passing Navcontroller to SearchScreen
+                onCitySelected = { city ->
+                    navController.navigate("weather/$city") {
+                        popUpTo("search") { inclusive = false }
+                    }
+                },
+                navController = navController
             )
         }
 
-        // 3. WeatherScreen-Route with the arg "city"
-        composable(
-            route = "weather/{cityName}",
+        composable(     //WeatherScreeen navigation. Take CityName and open WeatherScreen with it. Go to the SearchScreen on back click.
+            "weather/{cityName}",
             arguments = listOf(navArgument("cityName") {
                 type = NavType.StringType
             })
-        ) {                                                                                     //BackStackEntry is not used in SearchScreen
-            backStackEntry -> val city = backStackEntry.arguments?.getString("cityName") ?: "" //extracting the cityName argument from it to pass to WeatherScreen.
+        ) { backStackEntry ->
+            val city = backStackEntry.arguments?.getString("cityName") ?: ""
             WeatherScreen(
-                city, onBack = {          //Go back to Search-Screen without backstack-tracing further-on
-                navController.navigate("search") {
-                    popUpTo("weather/{cityName}") { inclusive = true }      //Backstack-tracing is OFF
-                    launchSingleTop = true //prevents creating a duplicate of "search" on the back stack.
+                city,
+                onBack = {
+                    navController.popBackStack("search", inclusive = false)
                 }
-            })
+            )
         }
     }
 }

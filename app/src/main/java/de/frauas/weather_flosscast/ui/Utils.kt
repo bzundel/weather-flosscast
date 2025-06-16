@@ -64,12 +64,12 @@ data class HourlyData(val hour: Int, val state : Int, val isNight : Boolean, val
 fun Forecast.getHourlyData(offsetHours: Int): HourlyData? {
     val tz = TimeZone.currentSystemDefault()
     //Adding hours to the targetTimeZone. In Util function the forecast data will be different directly
-    val targetDt = Clock.System.now().plus(offsetHours.hours).toLocalDateTime(tz)
-    val today = days.firstOrNull { it.date == targetDt.date } ?: return null
-    val hourly = today.hourlyValues.firstOrNull { it.dateTime.hour == targetDt.hour } ?: return null
-    val sunrise: kotlinx.datetime.LocalDateTime = today.sunrise
+    val targetDt = Clock.System.now().plus(offsetHours.hours).toLocalDateTime(tz)   //adds targetted time to our localTime
+    val today = days.firstOrNull { it.date == targetDt.date } ?: return null    //gets todays data with a comparison of all days
+    val hourly = today.hourlyValues.firstOrNull { it.dateTime.hour == targetDt.hour } ?: return null    //gets hourly data comparing hours on the list
+    val sunrise: kotlinx.datetime.LocalDateTime = today.sunrise //gets sunrise, sunset data
     val sunset:  kotlinx.datetime.LocalDateTime = today.sunset
-    val isNight = targetDt < sunrise || targetDt > sunset
+    val isNight = targetDt < sunrise || targetDt > sunset   //isnight of the offset-Time if time is in between sunrise, sunset
 
     return HourlyData(
         hour    = targetDt.hour,
@@ -88,11 +88,11 @@ data class DailyData(val dayLabel : String, val state : Int, val rain : Int, val
  *
  */
 fun Forecast.getDailyData(day: Int): DailyData {
-    if (day >= days.size) return DailyData("Unbekannt", 0, 0, 0, 0)
+    if (day >= days.size) return DailyData("Unbekannt", 0, 0, 0, 0) //if day is higher than days.size in Forecast(7) return value is 0
 
-    val targetDay = days[day]
-    val date = targetDay.date
-    val weekdayLabel = if (day == 0) "Heute" else when (date.dayOfWeek) {
+    val targetDay = days[day]       //gets the right time forecast data
+    val date = targetDay.date       //gets target time from forecast
+    val weekdayLabel = if (day == 0) "Heute" else when (date.dayOfWeek) {   //sets days labels accordingly to day data in forecast
         DayOfWeek.MONDAY    -> "Montag"
         DayOfWeek.TUESDAY   -> "Dienstag"
         DayOfWeek.WEDNESDAY -> "Mittwoch"
@@ -101,12 +101,12 @@ fun Forecast.getDailyData(day: Int): DailyData {
         DayOfWeek.SATURDAY  -> "Samstag"
         DayOfWeek.SUNDAY    -> "Sonntag"
     }
-    val weatherCode = targetDay.hourlyValues.maxByOrNull { it.weatherCode }?.weatherCode ?: 0   //Takes biggest weatherCode
-    val rainProbability = targetDay.hourlyValues.maxOfOrNull { it.precipitationProbability } ?: 0
-    val maxTemp = targetDay.hourlyValues.maxOfOrNull { it.temperature }?.roundToInt() ?: 0
-    val minTemp = targetDay.hourlyValues.minOfOrNull { it.temperature }?.roundToInt() ?: 0
+    val weatherCode = targetDay.hourlyValues.maxByOrNull { it.weatherCode }?.weatherCode ?: 0   //gets biggest weatherCode number of the day(Worst-Case scenario)
+    val rainProbability = targetDay.hourlyValues.maxOfOrNull { it.precipitationProbability } ?: 0   //gets max value of rainProbability of the day
+    val maxTemp = targetDay.hourlyValues.maxOfOrNull { it.temperature }?.roundToInt() ?: 0  //gets the max temperature of the day
+    val minTemp = targetDay.hourlyValues.minOfOrNull { it.temperature }?.roundToInt() ?: 0  //gets the min temperature of the day
 
-    return DailyData(
+    return DailyData(   //return data
         dayLabel = weekdayLabel,
         state = weatherCode,
         rain = rainProbability,
@@ -123,12 +123,12 @@ fun Forecast.getWmoCodeAndIsNight(): Pair<Int, Boolean> {
     val today = days.firstOrNull() ?: return 0 to false
 
     //  Check if night or day
-    val sunrise = LocalDateTime.parse(today.sunrise.toString())
+    val sunrise = LocalDateTime.parse(today.sunrise.toString())     //Getting sunrise and sunset time from the api
     val sunset  = LocalDateTime.parse(today.sunset.toString())
     val now     = LocalDateTime.now()
-    val isNight = now.isBefore(sunrise) || now.isAfter(sunset)
+    val isNight = now.isBefore(sunrise) || now.isAfter(sunset)      //Set night to true if time is before sunrise or after sunset
 
-    val wmoCode = today.hourlyValues.firstOrNull()?.weatherCode ?: 0
+    val wmoCode = today.hourlyValues.firstOrNull()?.weatherCode ?: 0    //get current WeatherCode
 
     return wmoCode to isNight
 }
@@ -140,7 +140,7 @@ fun Forecast.getWmoCodeAndIsNight(): Pair<Int, Boolean> {
 suspend fun loadForecastsForCities(context: Context,cities: List<City>,forceRefresh : Boolean): Map<String, Forecast> {
     val appDir = context.filesDir
     val result = mutableMapOf<String, Forecast>()
-    for (city in cities) {
+    for (city in cities) {      //updated forecast through the city list
         try {
             val fc = getForecastFromCacheOrDownload(appDir, city.latitude, city.longitude, forceRefresh)
             result[city.cityName] = fc
@@ -148,7 +148,7 @@ suspend fun loadForecastsForCities(context: Context,cities: List<City>,forceRefr
         // ignore error
          }
     }
-    return result
+    return result   //return updated cities
 }
 
 /**
@@ -183,11 +183,6 @@ fun getLottieResForWmoCode(code: Int, isNight: Boolean): Int {
         }
     }
 }
-
-// -----------------------------------------------------------------------------
-// Functions for select the background-colour
-// -----------------------------------------------------------------------------
-
 
 /**
  * Function for get the right icon based on weather-code and if its night or not

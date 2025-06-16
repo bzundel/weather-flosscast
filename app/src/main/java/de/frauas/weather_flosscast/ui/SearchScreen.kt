@@ -45,7 +45,6 @@ import de.frauas.weather_flosscast.Forecast
 import de.frauas.weather_flosscast.getCitySearchResults
 import de.frauas.weather_flosscast.getForecastFromCacheOrDownload
 import kotlinx.datetime.toJavaLocalTime
-import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
@@ -78,15 +77,16 @@ fun SearchScreen(onCitySelected: (String) -> Unit, navController: NavController)
     val shimmerInstance = rememberShimmer(shimmerBounds = ShimmerBounds.Window)
     /* BackHandler values */
     var lastBackPressedTime by remember { mutableStateOf(0L) }
-    val backPressInterval = 2000L // 2 seconds
+    val backPressInterval = 1500L // 1,5 seconds
     val currentTime = System.currentTimeMillis()
 
-    // Initializing and loading the forecasts
-    LaunchedEffect(savedCities) {
+        //Update Forescreens and cityList at the start
         isLoading = true                                                    //isLoading = true for shimmer-effect when loading the list
-        forecasts = loadForecastsForCities(context, savedCities, false)     //Loading forecast without forcing  the update(Taking data from cache first)
+    LaunchedEffect(savedCities) {forecasts = loadForecastsForCities(context, savedCities, false)}     //Loading forecast without forcing  the update(Taking data from cache first)
+        savedCities = CityList.getCities(context)                           //refresh cityList direct at the beginning of the function
         isLoading = false                                                   //isLoading = false to disable the shimmer-effect
-    }
+
+
     //BackHandler for resetting search field and closing the application
     BackHandler {
         if (inputText.isNotEmpty() || query.isNotEmpty()) {             // Reset state to "reload" SearchScreen
@@ -117,6 +117,7 @@ fun SearchScreen(onCitySelected: (String) -> Unit, navController: NavController)
                 scope.launch {                                                                      //load all Forecasts with force boolean
                     isRefreshing = true
                     forecasts = loadForecastsForCities(context, savedCities,true)
+                    savedCities = CityList.getCities(context)
                     ///Toast.makeText(context, "Daten aktualisiert", Toast.LENGTH_SHORT).show()     //Toast for debugging
                     delay(500)                                                                      //Show loading animation longer
                     isRefreshing = false                                                            //Animation ends isRefreshing = false
@@ -190,17 +191,23 @@ fun SearchScreen(onCitySelected: (String) -> Unit, navController: NavController)
                             }
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        CityListView(                       //CityListView function call
+                        CityListView(                           //CityListview function call
                             context = context,
                             query = query,
-                            onCitySelected = onCitySelected,
+                            onCitySelected = { cityName ->
+                                val city = CityList.getCities(context).firstOrNull { it.cityName == cityName }
+                                if (city != null) {
+                                    CityList.addCity(context, city) //update the index of city if it exist on the list
+                                }
+                                onCitySelected(cityName)            //if CityCard clicked -> Jump to WeatherScreen with cityName String value
+                            },
                             cities = savedCities,
                             forecasts = forecasts,
                             onCityDeleted = {
                                 savedCities = CityList.getCities(context)
                             }
                         )
-                    }
+                   }
                 }
             }
         }
@@ -368,25 +375,13 @@ fun CityCard(
     modifier: Modifier = Modifier,
 
 ) {
+    val wmoCode   = forecast?.getWmoCodeAndIsNight()?.first ?: 0                    //Gets newest weathercode from forecast
+    val isNight = forecast?.getWmoCodeAndIsNight()?.second ?: false
 
-
-    // Checking if it is night or day with Sunrise,Sunset Values
-    val today     = forecast?.days?.firstOrNull()
-    val rawSunrise= today?.sunrise
-    val rawSunset = today?.sunset
-    val sunriseLdt = rawSunrise
-        ?.toString()
-        ?.let { LocalDateTime.parse(it) }
-    val sunsetLdt  = rawSunset
-        ?.toString()
-        ?.let { LocalDateTime.parse(it) }
-    val now        = LocalDateTime.now()
-    val isNight    = if (sunriseLdt != null && sunsetLdt != null) {
-        now.isBefore(sunriseLdt) || now.isAfter(sunsetLdt)
-    } else false
 
     //Color for the backgrounds of the CityCard
-    val bgColor = colorForWmoCode(forecast?.days?.firstOrNull()?.hourlyValues?.firstOrNull()?.weatherCode ?: 0, isNight )
+    val bgColor = colorForWmoCode(wmoCode, isNight)
+    val iconRes   = getIconForWmoCode(wmoCode, isNight)                                     //gets the right icon from function
 
     Card(
         shape = RoundedCornerShape(15.dp),
@@ -403,9 +398,6 @@ fun CityCard(
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ){
-
-            val wmoCode   = today?.hourlyValues?.firstOrNull()?.weatherCode ?: 0                    //Gets newest weathercode from forecast
-            val iconRes   = getIconForWmoCode(wmoCode, isNight)                                     //gets the right icon from function
 
             Image(
                 painter = painterResource(id = iconRes),
