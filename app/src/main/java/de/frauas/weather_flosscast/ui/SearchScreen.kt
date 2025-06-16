@@ -1,6 +1,7 @@
 package de.frauas.weather_flosscast.ui
 
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -328,13 +329,8 @@ fun NewCityCard(
 
                     } catch (e: Exception) {                                                        //If not, give user some Toast notification
                         // 3) wenn fehlschlägt, nur Toast
-                        Toast
-                            .makeText(
-                                context,
-                                "Für ${city.cityName} konnten keine Wetterdaten geladen werden",
-                                Toast.LENGTH_SHORT
-                            )
-                            .show()
+                        Toast.makeText(context,"Für ${city.cityName} konnten keine Wetterdaten geladen werden",Toast.LENGTH_SHORT).show()
+                        Log.e("CitySearch", "Fehler beim Laden: ${e.localizedMessage}", e)  //Collecting more Information about the error in the logcat
                     }
                 }
             },
