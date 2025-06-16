@@ -70,7 +70,9 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
         onRefresh = {
             scope.launch {
                 isRefreshing = true
-                forecast = loadForecastsForCities(context, CityList.getCities(context), true)[cityName]
+                forecast = city?.let {
+                    getForecastFromCacheOrDownload(context.filesDir, it.latitude, it.longitude, true)
+                } ?: throw IllegalArgumentException("City must not be null")    //getting new Forecast with null protection
                 Toast.makeText(context, "Daten aktualisiert", Toast.LENGTH_SHORT).show()
                 delay(1000)
                 isRefreshing = false
