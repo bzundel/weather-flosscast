@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.annotation.DrawableRes
 import androidx.annotation.RawRes
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import de.frauas.weather_flosscast.City
 import de.frauas.weather_flosscast.Forecast
 import de.frauas.weather_flosscast.R
@@ -178,7 +179,7 @@ fun getLottieResForWmoCode(code: Int, isNight: Boolean): Int {
             22, in 70..79                -> R.raw.schnee            // Schnee / Schneeschauer
             in 20..21, 25,
             in 50..59, in 60..69,
-            in 80..89                    -> R.raw.sonne             // Drizzle / Rain / Showers
+            in 80..89                    -> R.raw.rain              // Drizzle / Rain / Showers
             else                               -> R.raw.wolken            // Nebel, Staub, sonstige Wolken
         }
     }
