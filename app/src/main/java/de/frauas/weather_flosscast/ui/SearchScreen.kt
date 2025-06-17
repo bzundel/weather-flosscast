@@ -53,6 +53,13 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.valentinilk.shimmer.ShimmerBounds
 import com.valentinilk.shimmer.rememberShimmer
 import com.valentinilk.shimmer.shimmer
+import de.frauas.weather_flosscast.ui.theme.cardCity
+import de.frauas.weather_flosscast.ui.theme.cardCountry
+import de.frauas.weather_flosscast.ui.theme.cardHighLow
+import de.frauas.weather_flosscast.ui.theme.cardTemp
+import de.frauas.weather_flosscast.ui.theme.cardTime
+import de.frauas.weather_flosscast.ui.theme.newCardCountry
+import de.frauas.weather_flosscast.ui.theme.newcardCity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.toJavaLocalDate
@@ -247,13 +254,14 @@ fun CityListView(
             searchResults = emptyList()                                                             //If query is empty, empty the list also
         }
     }
-    // Print the result for city search                                                             //Print newCityCard for every City from CityList
+
+    // Print the result for city search-------------------------------------                        //Print newCityCard for every City from CityList
     Column {
         searchResults.forEach { city ->         //Print each city once
             NewCityCard(context, city) {                                                            //NewCityCard for each city from list
                 onCitySelected(city.cityName)
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))//Space between NewCityCards
         }
     }
     var cityToDelete by remember { mutableStateOf<City?>(null) }                                    //DeleteDialog for CityCards
@@ -271,13 +279,12 @@ fun CityListView(
             dismissButton    = { TextButton(onClick = { cityToDelete = null }) { Text("Abbrechen") } }  //Dismiss Button
         )
     }
-// Print the list of saved Cities
+
+    // Print the list of saved Cities--------------------------------------
     Column {
         cities.forEach { city -> val forecast = forecasts[city.cityName]                            //update forecast for each city on the list(without force update)
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .combinedClickable(
+                modifier = Modifier.fillMaxWidth().combinedClickable(
                         onClick = {
                             CityList.addCity(context, city)                                         //if clicked on CityCard -> Add city to list
                             onCitySelected(city.cityName)                                           //goto WeatherScreen on clicked city
@@ -287,34 +294,25 @@ fun CityListView(
             ) {
                 CityCard(city = city, forecast = forecast, modifier = Modifier)                      //CityCard for each city from CityList
             }
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.dp))//Space between CityCards
         }
     }
-
 }
 
 /**
  * Composable which creates Cards for searched cities
  */
 @Composable
-fun NewCityCard(
-    context: Context,
-    city: City,
-    onCitySelected: (String) -> Unit
-) {
+fun NewCityCard(context: Context, city: City, onCitySelected: (String) -> Unit) {
 //Create a coroutine scope tied to the composables lifecycle
     val scope = rememberCoroutineScope()
 
     Card(
         shape = RoundedCornerShape(15.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(80.dp)
-            .clickable {
+        modifier = Modifier.fillMaxWidth().height(80.dp).clickable {
                 scope.launch {                                                                      //Launch coroutine to load forecast without blocking UI
-                    try {
-                        // Try to Load forecast
+                    try { // Try to Load forecast
                         getForecastFromCacheOrDownload(                                             //Checking if forecast is even possible for our coordinates
                             context.filesDir,
                             city.latitude,
@@ -336,27 +334,17 @@ fun NewCityCard(
             },
         colors = CardDefaults.cardColors(containerColor = Color.DarkGray)                           //CardColor
     ) {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(16.dp)
-        ) {
+        Column(modifier = Modifier.weight(1f).padding(16.dp)) {
             Text(
                 text = city.cityName,                                                               //Cityname on the cards with new cities
-                style = MaterialTheme.typography.bodyMedium,
-                fontSize = 20.sp,
-                color = Color.White
+                style = MaterialTheme.typography.newcardCity
             )
-
-            Spacer(modifier = Modifier.width(3.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             Text(
                 text = city.state + ", " + city.country,                                            //State and country
-                style = MaterialTheme.typography.bodyMedium,
-                fontSize = 13.sp,
-                color = Color.LightGray
+                style = MaterialTheme.typography.newCardCountry
             )
-            Spacer(modifier = Modifier.width(4.dp))
         }
     }
 }
@@ -365,15 +353,10 @@ fun NewCityCard(
  * Composable which creates Cards for already savedCities
  */
 @Composable
-fun CityCard(
-    city: City,
-    forecast: Forecast?, // nullable
-    modifier: Modifier = Modifier,
+fun CityCard(city: City, forecast: Forecast?, modifier: Modifier = Modifier, ) {
 
-) {
     val wmoCode   = forecast?.getWmoCodeAndIsNight()?.first ?: 0                    //Gets newest weathercode from forecast
     val isNight = forecast?.getWmoCodeAndIsNight()?.second ?: false
-
 
     //Color for the backgrounds of the CityCard
     val bgColor = colorForWmoCode(wmoCode, isNight)
@@ -382,16 +365,12 @@ fun CityCard(
     Card(
         shape = RoundedCornerShape(15.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        modifier = modifier
-            .fillMaxWidth()
-            .height(100.dp),
-
+        modifier = modifier.fillMaxWidth().height(100.dp),
         colors = CardDefaults.cardColors(containerColor = bgColor)
     ) {
         // all content in a row
         Row(
-            modifier = Modifier
-                .padding(horizontal = 20.dp, vertical = 16.dp),
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ){
 
@@ -401,7 +380,7 @@ fun CityCard(
                 modifier = Modifier.size(40.dp)
             )
 
-            Spacer(modifier = Modifier.width(26.dp))
+            Spacer(modifier = Modifier.width(26.dp))//Space after icon right side
 
             // cityname and co. in a column
             Column(
@@ -409,24 +388,19 @@ fun CityCard(
                 modifier = Modifier.weight(1f)
 
             ) {
-                Text(
-                    text = city.cityName,                       //Get the name of the city
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontSize = 23.sp,
+                Text(   //Get the name of the city
+                    text = city.cityName,
                     maxLines = 1,
-                    color = Color.White
+                    style = MaterialTheme.typography.cardCity,
                 )
-                Spacer(modifier = Modifier.width(8.dp))
 
-                Text(
-                    text = city.state + ", " + city.country,    //Get the state + country
-                    style = MaterialTheme.typography.bodySmall.copy(color = Color.White),
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Light
+                Text(   //Get the state + country
+                    text = city.state + ", " + city.country,
+                    maxLines = 1,
+                    style = MaterialTheme.typography.cardCountry,
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                                                                                                    //Get last updated forecast timestamp
-                Row {
+
+                Row {   //Get last updated forecast timestamp
                     Text(
                         text = forecast?.timestamp?.let { ts ->
                             // 1) Datum formatieren
@@ -436,9 +410,7 @@ fun CityCard(
                             // 3) beides zu einem String zusammenfügen
                             "$date, $time"
                         } ?: "--",  // falls forecast oder timestamp null ist
-                        style = MaterialTheme.typography.bodySmall.copy(color = Color.White),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Light
+                        style = MaterialTheme.typography.cardTime
                     )
                 }
             }
@@ -447,17 +419,13 @@ fun CityCard(
             Column (){
                 Text(
                     text = "${forecast?.getCurrentTemperature() ?: "-"}" + "°",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontSize = 25.sp,
-                    color = Color.White
+                    style = MaterialTheme.typography.cardTemp
                 )
-                Spacer(modifier = Modifier.width(18.dp))
 
                 //High and low temperatures under
                 Text(
                     text = "${forecast?.getDailyMaxTemp()}°" + "/${forecast?.getDailyMinTemp()}°",
-                    style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.8f)),
-                    fontSize = 12.sp
+                    style = MaterialTheme.typography.cardHighLow
                 )
             }
         }
