@@ -116,7 +116,7 @@ Jeder Eintrag auf dem Board ist als GitHub Issue angelegt und hat folgende Felde
 
 Durch diese enge Verzahnung von Issue-Tracking, Code-Repositories und agilen Meetings erreichen wir eine hohe Transparenz, schnelle Feedback-Zyklen und eine stetige Verbesserung unseres Workflows.
 
-\section{Product ownership \small{(Alwin Zimmermann)}}
+\section[Product ownership \small{(Alwin Zimmermann)}]{Product ownership \small{(Alwin Zimmermann)}\footnote{Für die Bearbeitung meiner Aufgabenteile wurde die Unterstützung von Gemini, einem KI-gestützten Sprachmodell von Google, sowie dem Duden Mentor (einschließlich seines KI-Assistenten für Umformulierungen) in Anspruch genommen. Die finale Prüfung und Bearbeitung sämtlicher Inhalte erfolgte eigenverantwortlich.}}
 \subsection{Aufgaben des Product Owners}
 In der Rolle des Product Owners war es erforderlich, eine präzise Definition des Projekts zu formulieren. Von entscheidender Bedeutung war die Erstellung von Anforderungen sowie die Ausarbeitung der verschiedenen User-Stories . Das Produkt muss den Erwartungen der Stakeholder entsprechen. Die Pflege des Backlogs zählt ebenfalls zu den Aufgaben des Product Owners, um den Fortschritt des Projekts zu dokumentieren.
 
@@ -130,7 +130,7 @@ Im Folgenden werde ich auf die von uns erstellten Reqirements eingehen und die d
 \subsection{Requirements}
 In diesem Teil gehe ich auf die Requirements ein. Diese beziehen sich auf die unten stehenden User-Stories. Die Kern-Requirements dienen als erste Anhaltspunkte, was der Product Owner verlangt und welche Kernfunktionalitäten wichtig sind.
 
-\subsection{Kernfunktionen (Hohe Priorität) \small{(Alwin Zimmermann)}}
+\subsection{Kernfunktionen (Hohe Priorität)}
 
 \subsubsection{Automatisches Anzeigen des aktuellen Wetters am Standort (US-001)}
 \begin{itemize}
@@ -186,40 +186,34 @@ In diesem teil sammele und beschreibe ich die User Stories für das Projekt \tex
 \subsubsection{Übersicht der User Stories}
 Um eine klare Übersicht zu gewährleisten, sind die wichtigsten Metadaten der User Stories in der folgenden Tabelle zusammengefasst. Detaillierte Beschreibungen und Akzeptanzkriterien finden sich in den nachfolgenden Abschnitten.
 
-\setlength{\LTpre}{0pt} % Kein zusätzlicher Platz vor der longtable
-\setlength{\LTpost}{0pt} % Kein zusätzlicher Platz nach der longtable
+\begin{center}
+\begin{tabularx}{.9\textwidth}{| X | c | c |}
+\hline
+\textbf{Beschreibung} & \textbf{US} & \textbf{Priorität} \\
+\hline
+Als Nutzer möchte ich beim Öffnen der App das aktuelle Wetter für meinen Standort sehen. & US-001 & Hoch \\
+\hline
+Als Nutzer möchte ich nach Städten suchen und sie einer Liste hinzufügen können. & US-002 & Hoch \\
+\hline
+Als Nutzer möchte ich das Wetter der zukünftigen Tage an meinem Standort sehen. & US-003 & Hoch \\
+\hline
+Als Nutzer möchte ich das zukünftige Wetter von gespeicherten Städten sehen. & US-004 & Hoch \\
+\hline
+Als Nutzer möchte ich Städte aus meiner Liste löschen können. & US-005 & Hoch \\
+\hline
+Als Nutzer möchte ich auch ohne Internet das letzte aktuelle Wetter an meinem Standort sehen. & US-006 & Mittel \\
+\hline
+Als Nutzer möchte ich auch ohne Internet das Wetter aus zuvor hinzugefügten Städten sehen. & US-007 & Mittel \\
+\hline
+Als Nutzer möchte ich eine Fehlermeldung sehen, wenn ich kein Internet habe. & US-008 & Mittel \\
+\hline
+Als Nutzer möchte ich eine Hilfefunktion und ein Impressum in der App finden. & US-009 & Niedrig \\
+\hline
+\end{tabularx}
+\end{center}
 
-%\small % Makes the text in the table slightly smaller
-%\begin{longtable}{|>{\RaggedRight}X|c|c|}
-%\hline
-%\textbf{Beschreibung} & \textbf{US} & \textbf{Priorität} \\
-%\hline
-%\endhead % End of the table header (repeated on each page)
-%
-%\hline
-%\multicolumn{3}{|r|}{Fortsetzung auf nächster Seite} \\
-%\hline
-%\endfoot % Footer for page breaks
-%
-%\hline
-%\endlastfoot % Footer for the end of the table
-%
-%Als Nutzer möchte ich beim Öffnen der App das aktuelle Wetter für meinen Standort sehen. & US-001 & Hoch \\
-%Als Nutzer möchte ich nach Städten suchen und sie einer Liste hinzufügen können. & US-002 & Hoch \\
-%Als Nutzer möchte ich das Wetter der zukünftigen Tage an meinem Standort sehen. & US-003 & Hoch \\
-%Als Nutzer möchte ich das zukünftige Wetter von gespeicherten Städten sehen. & US-004 & Hoch \\
-%Als Nutzer möchte ich Städte aus meiner Liste löschen können. & US-005 & Hoch \\
-%Als Nutzer möchte ich auch ohne Internet das letzte aktuelle Wetter an meinem Standort sehen. & US-006 & Mittel \\
-%Als Nutzer möchte ich auch ohne Internet das Wetter aus zuvor hinzugefügten Städten sehen. & US-007 & Mittel \\
-%Als Nutzer möchte ich eine Fehlermeldung sehen, wenn ich kein Internet habe. & US-008 & Mittel \\
-%Als Nutzer möchte ich eine Hilfefunktion und ein Impressum in der App finden. & US-009 & Niedrig \\
-%\end{longtable}
-
-\normalsize
 \subsection{Detaillierte User Story Beschreibungen}
-
 In diesem Abschnitt werden die einzelnen User Stories ausführlich beschrieben, inklusive ihrer Akzeptanzkriterien.
-\newpage
 \subsubsection{User Story: Als Nutzer möchte ich beim Öffnen der App das aktuelle Wetter für meinen Standort sehen.}
 \textcolor{storyblue}{\textbf{ID:}} US-001 \\
 \textcolor{storyblue}{\textbf{Priorität:}} Hoch \\
@@ -585,9 +579,6 @@ Diese User Story umfasst die Bereitstellung von Informationen über die App selb
 \paragraph{Anmerkungen/Diskussion}
 * 05.06.2025: Inhalte für Hilfe und Impressum finalisieren. Rechtliche Prüfung des Impressums erforderlich.
 
-\vfill
-\small 
-Für die Erstellung dieses Projekts wurde die Unterstützung von Gemini, einem KI-gestützten Sprachmodell von Google, sowie dem Duden Mentor (einschließlich seines KI-Assistenten für Umformulierungen) in Anspruch genommen. Die finale Prüfung und Bearbeitung sämtlicher Inhalte erfolgte eigenverantwortlich.
 \normalsize
 
 \section{Design \small{(Michael Filatoff)}}
