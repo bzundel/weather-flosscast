@@ -168,12 +168,14 @@ private fun convertToForecastObject(body: String): Forecast {
 
     val currentTimezone: TimeZone = TimeZone.currentSystemDefault()
 
+    val dates = hourlyValues.map { it.dateTime.date }.toSet().sorted()
+
     // group hourly values into separate dates
     val dailyForecasts: List<DailyForecast> = hourlyValues.groupBy { it.dateTime.date }
         .map { (date, measurements) -> DailyForecast(date
             , measurements
-            , sunrise.first { it.date == date }.toInstant(TimeZone.UTC).toLocalDateTime(currentTimezone)
-            , sunset.first { it.date == date }.toInstant(TimeZone.UTC).toLocalDateTime(currentTimezone)) }
+            , sunrise[dates.indexOf(dates.first { it == date })].toInstant(TimeZone.UTC).toLocalDateTime(currentTimezone)
+            , sunset[dates.indexOf(dates.first { it == date })].toInstant(TimeZone.UTC).toLocalDateTime(currentTimezone)) }
 
     logger.info { "Created daily forecast list" }
 
