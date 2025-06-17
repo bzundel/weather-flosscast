@@ -85,7 +85,7 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
         // Column of whole content
         LazyColumn(
             modifier = Modifier.fillMaxSize().background(bgC),
-            contentPadding = PaddingValues(vertical = 60.dp),//Space between top/bottom and content
+            contentPadding = PaddingValues(vertical = 50.dp),//Space between top/bottom and content
             verticalArrangement = Arrangement.spacedBy(30.dp)//Space between the items
         ) {
             item {// 1) Header with Lottie-animation
@@ -203,7 +203,7 @@ fun HourlyItem(forecast : Forecast?, hour : Int) {
         Image(
             painter = painterResource(id = getIconForWmoCode(HourlyData?.state ?: 0, HourlyData?.isNight ?: false)),
             contentDescription = "",
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(27.dp)
         )
         Spacer(modifier = Modifier.height(15.dp))
 
@@ -287,7 +287,7 @@ fun DailyItem(forecast: Forecast?, day : Int) {
             Image(
                 painter = painterResource(id = getIconForWmoCode(DailyData?.state ?: 0, false)),
                 contentDescription = "",
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(27.dp)
             )
         }
         //Spacer(modifier = Modifier.width(25.dp))//Spacer between icon and high temperature
