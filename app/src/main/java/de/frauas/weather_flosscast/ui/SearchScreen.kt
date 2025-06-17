@@ -89,10 +89,12 @@ fun SearchScreen(onCitySelected: (String) -> Unit, navController: NavController)
     val currentTime = System.currentTimeMillis()
 
         //Update Forescreens and cityList at the start
+    LaunchedEffect(savedCities) {
         isLoading = true                                                    //isLoading = true for shimmer-effect when loading the list
-    LaunchedEffect(savedCities) {forecasts = loadForecastsForCities(context, savedCities, false)}     //Loading forecast without forcing  the update(Taking data from cache first)
+        forecasts = loadForecastsForCities(context, savedCities, false)
         savedCities = CityList.getCities(context)                           //refresh cityList direct at the beginning of the function
         isLoading = false                                                   //isLoading = false to disable the shimmer-effect
+    }     //Loading forecast without forcing  the update(Taking data from cache first)
 
 
     //BackHandler for resetting search field and closing the application
@@ -127,7 +129,7 @@ fun SearchScreen(onCitySelected: (String) -> Unit, navController: NavController)
                     forecasts = loadForecastsForCities(context, savedCities,true)
                     savedCities = CityList.getCities(context)
                     ///Toast.makeText(context, "Daten aktualisiert", Toast.LENGTH_SHORT).show()     //Toast for debugging
-                    delay(500)                                                                      //Show loading animation longer
+                    delay(500) //Show loading animation longer
                     isRefreshing = false                                                            //Animation ends isRefreshing = false
                 }
             },
