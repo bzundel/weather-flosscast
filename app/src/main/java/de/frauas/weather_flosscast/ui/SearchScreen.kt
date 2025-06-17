@@ -37,7 +37,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.navigation.NavController
 import de.frauas.weather_flosscast.City
@@ -53,13 +52,7 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.valentinilk.shimmer.ShimmerBounds
 import com.valentinilk.shimmer.rememberShimmer
 import com.valentinilk.shimmer.shimmer
-import de.frauas.weather_flosscast.ui.theme.cardCity
-import de.frauas.weather_flosscast.ui.theme.cardCountry
-import de.frauas.weather_flosscast.ui.theme.cardHighLow
-import de.frauas.weather_flosscast.ui.theme.cardTemp
-import de.frauas.weather_flosscast.ui.theme.cardTime
-import de.frauas.weather_flosscast.ui.theme.newCardCountry
-import de.frauas.weather_flosscast.ui.theme.newcardCity
+import de.frauas.weather_flosscast.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.toJavaLocalDate

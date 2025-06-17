@@ -36,14 +36,14 @@ val Typography.temp: TextStyle
     get() = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
+        fontSize = 18.sp,
         color = Color.White
     )
 val Typography.medium: TextStyle
     get() = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
-        fontSize = 15.sp,
+        fontSize = 16.sp,
         color = Color.White
     )
 val Typography.mediumHeading: TextStyle

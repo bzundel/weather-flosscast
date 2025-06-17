@@ -20,7 +20,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import de.frauas.weather_flosscast.R
 import com.airbnb.lottie.compose.*
 import androidx.compose.runtime.getValue
@@ -261,7 +260,7 @@ fun DailyItem(forecast: Forecast?, day : Int) {
         Text(
             text = DailyData?.dayLabel ?: "Fehler",
             style = MaterialTheme.typography.medium,
-            modifier = Modifier.weight(1.6f)
+            modifier = Modifier.weight(1.2f)
         )
         //Spacer(modifier = Modifier.width(10.dp))//Spacer between Day-label and rain prob
         // 2) Rain probability and drop icon in a row

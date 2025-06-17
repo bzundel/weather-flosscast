@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.annotation.DrawableRes
 import androidx.annotation.RawRes
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import de.frauas.weather_flosscast.City
 import de.frauas.weather_flosscast.Forecast
 import de.frauas.weather_flosscast.R
@@ -94,13 +93,13 @@ fun Forecast.getDailyData(day: Int): DailyData {
     val targetDay = days[day]       //gets the right time forecast data
     val date = targetDay.date       //gets target time from forecast
     val weekdayLabel = if (day == 0) "Heute" else when (date.dayOfWeek) {   //sets days labels accordingly to day data in forecast
-        DayOfWeek.MONDAY    -> "Montag"
-        DayOfWeek.TUESDAY   -> "Dienstag"
-        DayOfWeek.WEDNESDAY -> "Mittwoch"
-        DayOfWeek.THURSDAY  -> "Donnerstag"
-        DayOfWeek.FRIDAY    -> "Freitag"
-        DayOfWeek.SATURDAY  -> "Samstag"
-        DayOfWeek.SUNDAY    -> "Sonntag"
+        DayOfWeek.MONDAY    -> "Mo."
+        DayOfWeek.TUESDAY   -> "Di."
+        DayOfWeek.WEDNESDAY -> "Mi."
+        DayOfWeek.THURSDAY  -> "Do."
+        DayOfWeek.FRIDAY    -> "Fr."
+        DayOfWeek.SATURDAY  -> "Sa."
+        DayOfWeek.SUNDAY    -> "So."
     }
     val weatherCode = targetDay.hourlyValues.maxByOrNull { it.weatherCode }?.weatherCode ?: 0   //gets biggest weatherCode number of the day(Worst-Case scenario)
     val rainProbability = targetDay.hourlyValues.maxOfOrNull { it.precipitationProbability } ?: 0   //gets max value of rainProbability of the day
