@@ -8,11 +8,16 @@ import androidx.compose.material3.MaterialTheme
 import de.frauas.weather_flosscast.ui.SearchScreen
 import de.frauas.weather_flosscast.ui.WeatherScreen
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.compose.runtime.CompositionLocalProvider
+
+
 
 //MAIN ACTIVITY WITH APPNAVHOST
 class MainActivity : ComponentActivity() {
@@ -20,9 +25,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                AppNavHost(
-                    startCity = CityList.getCities(this).firstOrNull()?.cityName
-                )
+                NoFontScaling {//Deactivate font scaling of mobile-phone
+                    AppNavHost(
+                        startCity = CityList.getCities(this).firstOrNull()?.cityName
+                    )
+                }
             }
         }
     }
@@ -78,5 +85,18 @@ fun AppNavHost(startCity: String?) {
                 }
             )
         }
+    }
+}
+//Deactivate font scaling of mobile-phone//
+@Composable
+fun NoFontScaling(content: @Composable () -> Unit) {
+    val density = LocalDensity.current
+    CompositionLocalProvider(
+        LocalDensity provides Density(
+            density = density.density,
+            fontScale = 1f
+        )
+    ) {
+        content()
     }
 }
