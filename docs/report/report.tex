@@ -642,6 +642,59 @@ Für die Erstellung dieses Projekts wurde die Unterstützung von Gemini, einem K
 \newpage
 
 \section{Technische Dokumentation}
+\subsection{Frontend \small{(Patryk Brychcy, Sascha Gavrilov)}}
+\subsubsection{Einleitung}
+Unsere Wetter-App besteht aus zwei Hauptbereichen: dem „SearchScreen“ zum Anlegen und Verwalten von Städten und dem „WeatherScreen“ zur Anzeige der aktuellen Wetterdaten und der Prognose für eine ausgewählte Stadt. Sobald die App gestartet wird, entscheidet MainActivity anhand der gespeicherten Städte, welcher Bildschirm zuerst angezeigt wird: entweder der Suchbildschirm, falls noch keine Städte hinterlegt sind, oder direkt die Wetteransicht für die zuletzt verwendeten Stadt.
+
+\subsubsection{Architekturübersicht}
+Die App ist nach dem klassischen Drei-Schichten-Prinzip aufgebaut.
+
+In der Präsentationsschicht stellen Composable-Funktionen in SearchScreen.kt und WeatherScreen.kt die Benutzeroberfläche dar, reagieren auf Eingaben und visualisieren die aktuellen Wetterdaten.
+
+Die Logik- und Aufbereitungsschicht in Utils.kt enthält alle Erweiterungsfunktionen, die die unbearbeiteten Forecast-Daten in gebrauchsfertige Teildaten umwandeln – etwa die momentane Temperatur, stündliche und tägliche Prognosewerte sowie die passenden Icons und Farben.
+
+In der Datenhaltung schließlich übernimmt CityList.kt die Persistenz, indem es bis zu 30 Städte als Base64-kodiertes JSON in den SharedPreferences verwaltet.
+
+So sind Darstellung, Geschäftslogik und Datenspeicherung sauber voneinander getrennt, was Wartung und Erweiterung der App erheblich erleichtert.
+
+\subsubsection{MainActivity}
+Die Navigation wird über einen NavHostController realisiert, der zwei Routen besitzt : „search“ für SearchScreen und „weather/{cityName}“ für WeatherScreen.
+
+Beim Start liest MainActivity über CityList.getCities(context) die gespeicherten Städte ein. Bei einer leeren Liste navigiert die App automatisch zum Suchbildschirm und zeigt eine kurze Info „Keine Städte gespeichert“. Bei einer gefüllten Liste leitet die App direkt weiter zur Detailansicht der zuletzt genutzten Stadt (WeatherScreen(cityName)).
+
+\subsubsection{SearchScreen}
+SearchScreen ist der zentrale Bildschirm, auf dem Nutzer neue Städte suchen und ihre bereits gespeicherten Orte verwalten können. Oben befindet sich eine Suchleiste, in die man per Textfeld den Namen einer Stadt eingibt. Sobald man die Suche auslöst, leert die Liste zunächst alle vorherigen Suchergebnisse und zeigt dann passende Treffer in Form von NewCityCards an. Jede Karte repräsentiert eine Stadt mit Name, Bundesland und Land und lädt bei einem Tipp im Hintergrund über eine Coroutine den Forecast.
+
+Gelingt die Abfrage, wird die Stadt in der Liste gespeichert (Duplikate anhand von Name, Bundesland und Land werden automatisch vermieden) und man springt direkt zur Detailansicht.
+
+Gelingt die Abfrage nicht, erhält man lediglich einen kurzen Toast-Hinweis auf den Fehler.
+
+Unterhalb der Suche zeigt CityListView alle bereits gespeicherten Städte als CityCards an. Jede CityCard enthält das aktuelle Wetter (Icon und Beschreibung), die momentane Temperatur, Minima und Maxima des Tages sowie einen Zeitstempel der letzten Aktualisierung.
+
+Ein kurzer Tap auf eine CityCard öffnet die Detailseite, ein langer Druck ruft ein Bestätigungsdialog auf, mit dem man die Stadt aus der Liste entfernen kann. Beim ersten Laden der gespeicherten Städte oder beim Pull-to-Refresh blendet die App einen animierten Shimmer-Placeholder ein.
+
+\subsubsection{WeatherScreen}
+
+WeatherScreen zeigt alle relevanten Wetterinformationen für eine ausgewählte Stadt. Direkt beim Betreten lädt die App den Forecast über getForecastFromCacheOrDownload, entweder aus dem lokalen Cache oder frisch von der API. Über einen SwipeRefresh-Wrapper können Nutzer jederzeit nach unten wischen, um die Daten neu zu laden.
+
+Im oberen Bereich, dem WeatherHeader, werden mithilfe der Funktion getWmoCodeAndIsNight() der WMO-Wettercode und der aktuelle Tag oder Nacht-Status ermittelt. Damit wählt die App automatisch die passende Lottie-Animation sowie die Hintergrundfarbe aus und zeigt in einer Spalte den Stadtnamen, die aktuelle Temperatur und einen kurzen Zustands-Text an.
+
+Darunter folgt eine horizontale Stundenübersicht „HourlyForecastRow“, die in einer LazyRow 24 Stunden anzeigt. Jede HourlyItem-Karte besteht aus der Uhrzeit, Temperatur und dem entsprechenden Icon und liegt in einem leicht abgedunkelten Box-Hintergrund, um stets gut lesbar zu bleiben. Anschließend bietet der SevenDayForecastBlock eine Sieben-Tage-Prognose in Form von sieben Spalten: Jeder DailyItem zeigt den Tagesnamen („Heute“ oder Wochentag), die Regenwahrscheinlichkeit in Prozent, ein Icon sowie die Tageshöchst- und Tiefsttemperatur.
+
+Ganz am Ende befindet sich die InfoBoxesSection mit vier Infoboxen: aktuelle Luftfeuchtigkeit, erwarteter Niederschlag für heute und morgen sowie Sonnenauf- und -untergangszeiten. Die Boxen liegen jeweils paarweise in zwei Zeilen, jede in einem verdunkeltem Hintergrund-Rahmen.
+
+\subsubsection{Utils.kt}
+
+In Utils.kt befinden sich Erweiterungsfunktionen, die die unbearbeiteten Forecast-Daten in übersichtliche Teildaten umwandeln. So liefert getCurrentTemperature() die Temperatur der aktuellen Stunde, getDailyMinTemp() und getDailyMaxTemp() ermitteln das Minimum und Maximum aus den 24 Stunden eines Tages. Die Funktion getHourlyData(offsetHours: Int) baut daraus ein HourlyData-Objekt mit Zeit, Temperatur, Zustand und Nacht-Flag, während getDailyData(day: Int) ein DailyData mit Label, Regenwahrscheinlichkeit, Min/Max und Icon-Code erstellt. Über Helper-Funktionen wie getLottieResForWmoCode, getIconForWmoCode, getConditionForWmoCode und colorForWmoCode wird jeweils basierend auf dem WMO-Code und dem Nacht-Status das richtige Icon, die passende Animation, der Beschreibungstext und die Hintergrundfarbe ausgewählt. Eine Parallelisierungsfunktion loadForecastsForCities(context, cities) lädt Forecasts für mehrere Städte gleichzeitig und ermöglicht dadurch ein zügiges Nachladen im SearchScreen.
+
+\subsubsection{CityList.kt}
+
+CityList ist ein Singleton-Objekt, das die Persistenz aller Städte in den Android-SharedPreferences übernimmt. Es legt einen PREF-Datensatz („CityListPref“) an und speichert bis zu 30 Städte als Base64-kodiertes JSON. Mit getCities(context) liest es die aktuelle Liste aus, addCity(context, newCity) fügt eine Stadt vorne hinzu (und ersetzt dabei ein bestehendes Duplikat), removeCity(context, city) entfernt einen Eintrag, und clearCities(context) leert die gesamte Liste – nützlich zum Debuggen oder Reset. Intern sorgt eine einfache Duplikatprüfung dafür, dass Namen, Bundesland und Land übereinstimmen, bevor eine Stadt wirklich hinzugefügt wird, und bei einem Überschreiten der Listenlänge wird automatisch der älteste Eintrag entfernt.
+
+\subsubsection{Zusammerfassung}
+
+Dank der klaren Trennung zwischen den Composables für die Bildschirme, den Hilfsfunktionen in Utils.kt und der Persistenz in CityList.kt ist das Frontend genau strukturiert und leicht wartbar. Neue Features wie Favoriten oder erweiterte Details lassen sich durch zusätzliche Module ergänzen, ohne bestehende Teile anzupassen.
+
 \subsection{Datenvorbereitung \small{(Benedikt Zundel)}}
 
 Als Schnittstelle für die Wetterdaten haben wir uns für die \texttt{open-meteo} \cite{open-meteo} API entschieden, da diese alle Daten liefert die wir anzeigen wollten und über weitere Funktionalitäten wie geocoding verfügt. Um die Daten zu konsumieren, definierten wir zunächst ein Datenstruktur (vgl. listing \ref{lst:data-structure}) um die abgeholten Daten intern zu repräsentieren. Die Idee war es, dem frontend für den Konsum nur ein einzelnes Objekt zu übergeben, über das sinnvoll iteriert werden kann.
