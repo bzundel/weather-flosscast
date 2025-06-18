@@ -1,6 +1,6 @@
 \documentclass{article}
 
-input{preamble.tex}
+\input{preamble.tex}
 
 \usepackage{listings}
 \usepackage{hyperref}
@@ -746,9 +746,6 @@ In dem gesamten Abfrageprozess wird hoher Wert auf die Richtigkeit der Daten und
 Unnötige Abfragen werden zum Schutze des Verbrauchs der Nutzer*innen, sowie zur Entlastung der API unterbunden. Ein weiterer Nutzen ist die Verfügbarkeit der aktuellen Daten ohne Internetverbindung. Um das zu realisieren, implementieren wir ein dateibasiertes Caching-System. Die unterliegende Datei enthält die von der API abgeholten Wetterdaten nach unserer definierten Datenstruktur serialisiert in einem JSON-Objekt, welches die Daten via gekürztem Koordinatensatz indiziert. Durch das Kürzen der Koordinaten auf eine Nachkommastelle erreichen wir einen klein gehaltenen Datensatz der gecached wird, da nicht jede minimale Veränderung im Standort als neuer individuelle Standort angesehen wird. Der Standort wird durch die Kürzung auf circa $ 12 km \times 12 km $ Kacheln abgebildet, was, durch die kleine Fläche, zu keinem Genauigkeitsverlust führt.
 Bei einem Aufruf der vom backend offengelegten Schnittstelle wird zunächst der Cache geladen und geprüft ob für die angefragten Koordinaten bereits ein Eintrag existiert. Sollte dies nicht der Fall sein, wird eine Abfrage auf die API gemacht und die Daten werden im Cache gespeichert. Wenn ein Eintrag gefunden wird, wird das Alter der Daten über ein Zeitstempel Feld geprüft. Ist ein Eintrag älter als eine Stunde, gilt dieser als veraltet und wird aktualisiert. Sonst wird der Eintrag aus dem Cache geladen und es geschieht keine Abfrage an die API.
 
-\newpage
-
-\section{Technische Dokumentation}
 \subsection{Testing \small{(Dwipa Flügel, Dominik Lepore)}}
 \subsubsection{Einleitung}
 
@@ -756,7 +753,7 @@ Das Testing in Android wird unterschieden in Unit Tests, welche lokal auf der Ja
 
 \subsection{Testplan}
 \begin{center}
-  \begin{tabularx}{\textwidth}{|X|l|X|l|}
+  \begin{tabularx}{\textwidth}{| X | X | X | X |}
     \hline
     \textbf{Subject under Test} & \textbf{Description} & \textbf{Category} & \textbf{Example Test} \\
     \hline
@@ -790,7 +787,6 @@ Das Testing in Android wird unterschieden in Unit Tests, welche lokal auf der Ja
     \hline
     Utils Weather Code Handling & Convert Weather Codes to the equivalent german words for the weahter & Unit test & Validating that the right german descriptiopn is returned on every possible weather code  \\
     \hline
-    
   \end{tabularx}
 \end{center}
 
