@@ -284,7 +284,7 @@ private fun shouldUpdateCache(cacheTimestamp: LocalDateTime): Boolean {
 }
 
 // serialize forecast object to jsonobject for writing
-private fun serializeForecast(forecast: Forecast): JsonObject {
+fun serializeForecast(forecast: Forecast): JsonObject {
     return buildJsonObject {
         put("timestamp", LocalDateTime.Formats.ISO.format(Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())))
         put("units", buildJsonObject {
