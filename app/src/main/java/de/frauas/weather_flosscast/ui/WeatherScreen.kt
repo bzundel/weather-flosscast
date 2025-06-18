@@ -29,6 +29,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
@@ -245,6 +246,7 @@ fun SevenDayForecastBlock(forecast : Forecast?) {
             }
         }
     }
+
 }
 
 // -----------------------------------------------------------------------------
@@ -260,7 +262,7 @@ fun DailyItem(forecast: Forecast?, day : Int) {
         Text(
             text = DailyData?.dayLabel ?: "Fehler",
             style = MaterialTheme.typography.medium,
-            modifier = Modifier.weight(1.2f)
+            modifier = Modifier.weight(1.2f).testTag("day")
         )
         //Spacer(modifier = Modifier.width(10.dp))//Spacer between Day-label and rain prob
         // 2) Rain probability and drop icon in a row
@@ -269,7 +271,7 @@ fun DailyItem(forecast: Forecast?, day : Int) {
             Image(
                 painter = painterResource(id = R.drawable.dropp),
                 contentDescription = "",
-                modifier = Modifier.size(9.dp)
+                modifier = Modifier.size(9.dp).testTag("Image")
             )
             Spacer(modifier = Modifier.width(3.dp))
             // The rain probability
@@ -287,7 +289,7 @@ fun DailyItem(forecast: Forecast?, day : Int) {
             Image(
                 painter = painterResource(id = getIconForWmoCode(DailyData?.state ?: 0, false)),
                 contentDescription = "",
-                modifier = Modifier.size(27.dp)
+                modifier = Modifier.size(27.dp).testTag("Image")
             )
         }
         //Spacer(modifier = Modifier.width(25.dp))//Spacer between icon and high temperature
@@ -297,7 +299,7 @@ fun DailyItem(forecast: Forecast?, day : Int) {
             Image(
                 painter = painterResource(id = R.drawable.up),
                 contentDescription = "",
-                modifier = Modifier.size(22.dp).weight(1f)
+                modifier = Modifier.size(22.dp).weight(1f).testTag("Image")
             )
             Spacer(modifier = Modifier.width(1.dp))
             Text(
@@ -311,7 +313,7 @@ fun DailyItem(forecast: Forecast?, day : Int) {
             Image(
                 painter = painterResource(id = R.drawable.down),
                 contentDescription = "",
-                modifier = Modifier.size(22.dp)
+                modifier = Modifier.size(22.dp).testTag("Image")
             )
             Spacer(modifier = Modifier.width(1.dp))
             Text(
