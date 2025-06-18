@@ -56,6 +56,55 @@ fun generateMockForecast(): Forecast {
     )
 }
 
+fun generateSpecifiedMockForecast(customTemperature: Double): Forecast {
+    val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+    val today = now.date
+
+    val units = Units(
+        temperature = "°C",
+        humidity = "%",
+        precipitationProbability = "%",
+        rain = "mm",
+        showers = "mm",
+        snow = "cm"
+    )
+
+    val days = (0 until 7).map { dayOffset ->
+        val date = today.plus(dayOffset, DateTimeUnit.DAY)
+        val sunrise = LocalDateTime(date.year, date.monthNumber, date.dayOfMonth, 6, 0)
+        val sunset = LocalDateTime(date.year, date.monthNumber, date.dayOfMonth, 21, 0)
+
+        val hourlyValues = (0 until 24).map { hour ->
+            val dateTime = LocalDateTime(date.year, date.monthNumber, date.dayOfMonth, hour, 0)
+
+            Hourly(
+                dateTime = dateTime,
+                temperature = customTemperature,
+                relativeHumidity = Random.nextInt(40, 90),
+                precipitationProbability = Random.nextInt(0, 60),
+                rain = 0.0,
+                showers = 0.0,
+                snowfall = 0.0,
+                weatherCode = Random.nextInt(0, 100)
+            )
+        }
+
+        DailyForecast(
+            date = date,
+            hourlyValues = hourlyValues,
+            sunrise = sunrise,
+            sunset = sunset
+        )
+    }
+
+    return Forecast(
+        timestamp = now,
+        days = days,
+        units = units
+    )
+
+}
+
 fun generateExpiredMockForecast(): Forecast {
     val now = Clock.System.now().minus(3, DateTimeUnit.HOUR).toLocalDateTime(TimeZone.currentSystemDefault())
     val today = now.date
@@ -108,6 +157,6 @@ fun generateExpiredMockForecast(): Forecast {
 fun jsonifyForecastWithCoordinates(forecast : Forecast, latitude: Double, longitude: Double): JsonObject {
     val cacheForecastList = Json.parseToJsonElement(Json.encodeToString(JsonObject(emptyMap()))).jsonObject
     val forecastJson: JsonObject = serializeForecast(forecast)
-    val updatedCacheForecastList: JsonObject = JsonObject(cacheForecastList + ("${String.format(Locale.ENGLISH, "%.1f", latitude)}:${String.format(Locale.ENGLISH, "%.1f", longitude)}" to forecastJson))
+    val updatedCacheForecastList = JsonObject(cacheForecastList + ("${String.format(Locale.ENGLISH, "%.1f", latitude)}:${String.format(Locale.ENGLISH, "%.1f", longitude)}" to forecastJson))
     return updatedCacheForecastList
 }
