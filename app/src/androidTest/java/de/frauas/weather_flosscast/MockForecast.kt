@@ -1,6 +1,9 @@
 package de.frauas.weather_flosscast
 import kotlinx.datetime.*
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import java.util.Locale
 import kotlin.random.Random
 
 fun generateMockForecast(): Forecast {
@@ -101,4 +104,10 @@ fun generateExpiredMockForecast(): Forecast {
         days = days,
         units = units
     )
+}
+fun jsonifyForecastWithCoordinates(forecast : Forecast, latitude: Double, longitude: Double): JsonObject {
+    val cacheForecastList = Json.parseToJsonElement(Json.encodeToString(JsonObject(emptyMap()))).jsonObject
+    val forecastJson: JsonObject = serializeForecast(forecast)
+    val updatedCacheForecastList: JsonObject = JsonObject(cacheForecastList + ("${String.format(Locale.ENGLISH, "%.1f", latitude)}:${String.format(Locale.ENGLISH, "%.1f", longitude)}" to forecastJson))
+    return updatedCacheForecastList
 }
