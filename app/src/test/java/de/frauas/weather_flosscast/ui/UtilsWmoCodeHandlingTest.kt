@@ -3,7 +3,7 @@ package de.frauas.weather_flosscast.ui
 import org.junit.Before
 import org.junit.Test
 import kotlin.random.Random
-import kotlin.test.assertEquals
+import org.junit.Assert.*
 
 class UtilsWmoCodeHandlingTest {
     var mockWmoCode: Int = 0
