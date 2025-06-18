@@ -6,7 +6,7 @@ import androidx.compose.ui.graphics.Color
 import org.junit.Assert.*
 import org.junit.Test
 
-class BackgroundColorTest {
+class UtilsBackgroundColorTest {
     @Test
     fun nightColorTest(){
         val backgroundColor = colorForWmoCode(Random.nextInt(0,101), true)
