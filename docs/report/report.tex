@@ -1,6 +1,6 @@
 \documentclass{article}
 
-\input{preamble.tex}
+input{preamble.tex}
 
 \usepackage{listings}
 \usepackage{hyperref}
@@ -747,6 +747,68 @@ Unnötige Abfragen werden zum Schutze des Verbrauchs der Nutzer*innen, sowie zur
 Bei einem Aufruf der vom backend offengelegten Schnittstelle wird zunächst der Cache geladen und geprüft ob für die angefragten Koordinaten bereits ein Eintrag existiert. Sollte dies nicht der Fall sein, wird eine Abfrage auf die API gemacht und die Daten werden im Cache gespeichert. Wenn ein Eintrag gefunden wird, wird das Alter der Daten über ein Zeitstempel Feld geprüft. Ist ein Eintrag älter als eine Stunde, gilt dieser als veraltet und wird aktualisiert. Sonst wird der Eintrag aus dem Cache geladen und es geschieht keine Abfrage an die API.
 
 \newpage
+
+\section{Technische Dokumentation}
+\subsection{Testing \small{(Dwipa Flügel, Dominik Lepore)}}
+\subsubsection{Einleitung}
+
+Das Testing in Android wird unterschieden in Unit Tests, welche lokal auf der Java Virtual Machine ausgeführt wird (JVM), Component Tests und Feature Tests, welche sowohl lokal als auch emuliert wird und letztlich Application und Release Candidate Tests, welche nur emuliert werden oder auf echten Geräten laufen. Wir werden uns in unsere Applikation nur um Unit, Component, Feature und Application Tests beschäftigen, da Release Candidtate Tests tendenzierend auf echten Geräten getestet werden sollten. Unit Tests prüfen eine einzelne Logikeinheit, unabhängig vom Android Framework. Component Tests prüfen einzelne Komponenten unabhängig von anderen Komponenten, jedoch weniger isolierter als nur Methoden und Klassen. Feature Tests prüfen die Interaktion zwischen mindestens zwei unabhängigen Komponenten, als Beispiel könnte man hier die Interaktion zwischen UI und abgefragten Daten nennen. Application Tests prüfen zuletzt die ganze Funktionalität der Applikation, zum Beispiel indem sie einen User Flow imitieren und prüfen.
+
+\subsection{Testplan}
+\begin{center}
+  \begin{tabularx}{\textwidth}{|X|l|X|l|}
+    \hline
+    \textbf{Subject under Test} & \textbf{Description} & \textbf{Category} & \textbf{Example Test} \\
+    \hline
+    Search Bar UI behavior & Shows recommendation based on autocorrect & Component tests & UI Behavior test running on Espresso/Jetpack Compose/Roboelectric  \\
+    \hline
+   Citylist UI behavior  & A form with a list that is only enabled when at least one city has been added & Component tests & UI Behavior Test on Jetpack Compose \\
+    \hline
+    Citylist City selection & A screen showing the weather forecast when a city is selected & Application tests & UI Behavior Test on Jetpack Compose \\
+    \hline
+    Search result list UI behavior & A form with a list that is only shown after the user has entered an input into the search bar & Component tests & UI Behavior Test on Jetpack Compose  \\
+    \hline
+    Search bar city search & A screen showing the search results when a user has searched for a city & Application tests & UI Behavior Test on Jetpack Compose \\
+    \hline
+    Search result list adding city & A screen showing the updated city list after a user has selected a city to add & Application tests & UI Behavior Test on Jetpack Compose \\
+    \hline
+    Current location UI behavior & A form with a forecast of the current location after opening the app & Component tests & UI Behavior Test on Jetpack Compose \\
+    \hline
+    Retention of Citylist after closing & A complete app opening, closing and opening flow & Application tests & UI Behavior Test on Jetpack Compose \\
+    \hline
+    WeatherScreen Hourly Item UI & Displays the temperature and a weather icon for an specified hour of an specified day & Component tests & Comprose preview running on Jetpack Compose using mock values \\
+    \hline
+    Backend DataHelper Forecast Caching & Caches retrieved forecast data, updates expired forecast data and retrieves data from the external API & Component test & Using Test context and mock Caches different caching scenarios are tested. E.g. an expired Cache has to be updated\\
+    \hline
+    City List encoding and decoding & Encodes the City Datatype to a json String and decodes it in the opposite direction & Unit test & Simple validating if the encoding and decoding keeps the right values  \\
+    \hline
+    Utils Background color calculation & Calculates the background color depending on the time of day and the weather & Unit test & Validating the right colors are returned on all possible scenarios  \\
+    \hline
+    Utils helper functions & Defined Utils helper function to easily retrieve needed forecast data & Unit test & Validating that the right forecast data is returned, based on mocked forecast data  \\
+    \hline
+    Utils LottieRes Icons & Returns LottieRes Icons depending on the time of day and the current weather & Unit test & Checking if the right icons are calculated for all possible scenarios  \\
+    \hline
+    Utils Weather Code Handling & Convert Weather Codes to the equivalent german words for the weahter & Unit test & Validating that the right german descriptiopn is returned on every possible weather code  \\
+    \hline
+    
+  \end{tabularx}
+\end{center}
+
+\subsubsection{Probleme}
+
+Der Prozess des Testings hatte sich äußerst schwer ergeben. Wir beide haben leider keine Erfahrung in der Entwicklung mit Android als auch Kotlin und empfanden das Testing auch als sehr überwältigend, trotz der vorherigen Beteiligung des Testings im letzten Projekt. Wir haben das reine Ausmaß an Testing im Vergleich zum letzten Projekt einfach zu sehr unterschätzt, zudem hatte sich Kotlin als weitaus anspruchsvollere Sprache herausgestellt als Python. Ein unerwartetes Problem ist überraschenderweise jedoch die Testability unserer Wetter-App. Laut Google sollte eine Testing-Strategie verfolgt werden, in der integrierte Tests auf Isolierten aufbauen. Grafisch sieht das folgendermaßen aus:
+
+\begin{figure}[h]
+  \caption{Bild der Google Testing Pyramide}
+  \centering
+  \includegraphics[width=\textwidth]{testing_pyramid.png}
+\end{figure}
+
+Das heißt, ein Großteil des Testings sollte unit-basiert sein, was sich in unserem Falle jedoch als etwas schwierig herausgestellt hat. Das Backend des Projektes beschäftigt sich mit den Geo-Daten, die wir aus OpenStreetMap und den Wetter-Daten, die wir aus Open-Meteo beziehen. Hierfür stehen uns jedoch nur wenige Funktionen zur Verfügung, da ein Großteil der Methoden auf private gestellt ist in unserer DataHelper-Klasse. Eine weitere Herausforderung des Unit Testing des Backends war die CityList-Klasse, welche nur benutzt werden kann, nachdem ein Singleton-Objekt erstellt wurde. Zudem verwenden die Methoden des Objektes eine sharedPreferences-Datei, welche Teil des Android-Framework ist und somit unter die Integration Tests fallen. Unit Testing im Frontend ist eher unüblich, jedoch in Situationen möglich, indem unsere UI-Elemente kein Android-Framework benutzen. Die UI unserer App wird jedoch durch eine MainActivity gestartet, besitzt einen NavHost und damit einen NavController, welche die Sequenzen unserer angezeigten Seiten steuert, zudem benutzen einen Großteil unserer Composables auch noch den NavController oder einen Context, eine weitere Funktion des Android-Frameworks. Es stellt sich also als eher schwierig diese in isolierung zu testen, der Großteil des UI-Testings sind also Instrumented-Tests, welche den NavController mocken, der gebraucht wird um die Composables überhaupt zu starten. Das Hauptproblem, welches das UI-Testing Volumen ist, basiert auf der Dynamik des Projektes. Eine Wetter-App zieht prinzipiell nur Daten aus dem Internet, speichert sie Lokal und stellt diese Daten dynamisch dar für jede mögliche Kombination der Daten. Da das Aussehen unserer App dynamisch ist und sich an den Daten anpasst, welche alle variieren, sind Screenshot-Test leider sehr unbrauchbar. Die UI besitzt eine zu große Menge an Entropie, welche den Aufwand an korrekten Screenshots drastisch in die Höhe schießt, zudem erhöht sich dies mit der Menge and möglichen Kombinationen von Android Setups. Dadurch wurde entschieden, dass das UI Testing großteils auf Behavior Tests basieren sollte.
+
+\subsubsection{Verbesserungen}
+
+Es gibt einen weitaus größere Menge an Libraries, die beim Testen benutzt werden könnten. Die Unit-Tests der UI hätte mittels Roboelectric tatsächlich ohne Emulator laufen können, Roboelectric führt diese Tests dann beim Host in der JVM aus, dadurch würde man sich die Zeit des emulieren sparen. Auch wenn die Wetter-App etwas unpassend für Screenshot-Tests ist durch ihre Entropie, gibt es jedoch ein paar Fälle, bei dem das Sinn ergeben hätte, nämlich dem Erststart der App und der Stadtsuche ohne gespeicherte Städte. Zudem würde sich ein paar mehr Integration-Tests für gewisse Use-Cases doch noch eignen, wie das benutzen des Android-Frameworks wie das drehen und swipen auf dem Bildschirm, würden aber zu viele Ressourcen kosten für das Ausmaß der Workload. Außerdem wurden im letzten Projekt ein Monkey-Test erwähnt, den wir noch gerne hätten benutzen wollen, jedoch verblieb uns wenig Zeit durch andere Verpflichtungen. Nichtsdestotrotz sind wir beide zufrieden mit der Menge, die wir gelernt haben, welche durch den Stress des Umfangs und der Zeit entstanden ist.
 
 \bibliographystyle{plain}
 \bibliography{refs}
