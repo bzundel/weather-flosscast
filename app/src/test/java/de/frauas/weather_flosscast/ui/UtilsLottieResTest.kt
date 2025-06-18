@@ -5,7 +5,9 @@ import org.junit.Test
 import org.junit.Assert.*
 import kotlin.random.Random
 
+//Tests to check if the right Lottie Icons get returned for the specified weather code
 class UtilsLottieResTest {
+    //Tests icon for random weather code at night
     @Test
     fun getIconForRandomNightWmoCode(){
         val randomWmoCode = Random.nextInt(0, 101)
@@ -24,6 +26,7 @@ class UtilsLottieResTest {
         assertEquals(getLottieResForWmoCode(randomWmoCode, true), expectedLottieRes)
     }
 
+    //Tests icon for random weather code at day
     @Test
     fun getIconForRandomDayWmoCode(){
         val randomWmoCode = Random.nextInt(0, 101)

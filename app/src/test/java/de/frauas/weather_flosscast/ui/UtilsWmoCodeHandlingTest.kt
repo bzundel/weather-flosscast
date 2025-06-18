@@ -5,14 +5,17 @@ import org.junit.Test
 import kotlin.random.Random
 import org.junit.Assert.*
 
+//Tests if the right weather code description gets returned on weather specified weather code
 class UtilsWmoCodeHandlingTest {
     var mockWmoCode: Int = 0
 
+    //Creates random weather code
     @Before
     fun randomMockWmoCode(){
         mockWmoCode = Random.nextInt(0, 101)
     }
 
+    //Tests if the right description gets returned with random weather code
     @Test
     fun getConditionForRandomWmoCodeTest(){
         val expectedString =  when (mockWmoCode) {

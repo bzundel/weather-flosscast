@@ -17,13 +17,17 @@ import org.junit.Test
 import kotlin.math.roundToInt
 
 
+//Tests the defined helper functions for forecast data handling from Utils.kt
 class UtilsForecastDataTest{
+    //Mock variables
     lateinit var mockForecast : Forecast
     lateinit var mockMinMaxForecast : Forecast
     var customTemperature : Double = 0.0
     var customMinTemperature : Double = -10.0
     var customMaxTemperature : Double = 40.0
 
+    //Because of an unit test the function got copied from MockForecast.kt
+    //See MockForecast.kt for comments to this function
     fun generateSpecifiedMockForecast(customTemperature: Double): Forecast {
         val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
         val today = now.date
@@ -73,6 +77,8 @@ class UtilsForecastDataTest{
 
     }
 
+    //Because of an unit test the function got copied from MockForecast.kt
+    //See MockForecast.kt for comments to this function
     fun generateSpecifiedMinMaxMockForecast(customTemperature: Double, customMinTemperature: Double, customMaxTemperature: Double): Forecast {
         val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
         val today = now.date
@@ -148,6 +154,7 @@ class UtilsForecastDataTest{
 
     }
 
+    //Sets random values for all the mock variables before each test
     @Before
     fun initMockForecast(){
         customTemperature = Random.nextInt(-5, 30).toDouble()
@@ -157,24 +164,33 @@ class UtilsForecastDataTest{
         mockMinMaxForecast = generateSpecifiedMinMaxMockForecast(customTemperature, customMinTemperature, customMaxTemperature)
     }
 
+    //Tests if the correct current temperature gets returned
     @Test
     fun testGetCurrentTemperature(){
+        //The mock forecast got created with the same temprature for all values, therefore the mock temperature gets compared to the return of the getCurrentTemp function
         assertEquals(mockForecast.getCurrentTemperature(), customTemperature.roundToInt())
     }
 
+    //Tests if the correct minimum temperature gets returned
     @Test
     fun testGetDailyMinTemperature(){
+        //In the mock forecast every day has the same minimun Temperature. The returned value gets compared to the set mock minimum temperature
         assertEquals(mockMinMaxForecast.getDailyMinTemp(), customMinTemperature.roundToInt())
     }
 
+    //Tests if the correct maximum temperature gets returned
     @Test
     fun testGetMaxTemperature(){
+        //In the mock forecast every day has the same maximum Temperature. The returned value gets compared to the set mock maximum temperature
         assertEquals(mockMinMaxForecast.getDailyMaxTemp(), customMaxTemperature.roundToInt())
     }
 
+    //Tests if the DailyData has the right values
     @Test
     fun testGetDailyData(){
+        //Runs function
         val testDailyData = mockMinMaxForecast.getDailyData(0)
+        //Test if the fields dayLabel, max, min are the correct values
         assertEquals(testDailyData.dayLabel, "Heute")
         assertEquals(testDailyData.max, customMaxTemperature)
         assertEquals(testDailyData.min, customMinTemperature)
