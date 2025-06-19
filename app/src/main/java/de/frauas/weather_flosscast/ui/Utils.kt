@@ -1,6 +1,8 @@
 package de.frauas.weather_flosscast.ui
 
 import android.content.Context
+import android.util.Log
+import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.annotation.RawRes
 import androidx.compose.ui.graphics.Color
@@ -12,6 +14,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import java.io.IOException
 import java.time.LocalDateTime
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.hours
@@ -59,7 +62,7 @@ fun Forecast.getDailyMaxTemp(): Int {
 data class HourlyData(val hour: Int, val state : Int, val isNight : Boolean, val temp: Int)
 
 /**
- *
+ *  Gets data for the Hourly-Table in Weather-Screen
  */
 fun Forecast.getHourlyData(offsetHours: Int): HourlyData? {
     val tz = TimeZone.currentSystemDefault()
@@ -85,7 +88,7 @@ data class DailyData(val dayLabel : String, val state : Int, val rain : Int, val
 
 
 /**
- *
+ *  Gets the list with days for the daily Columns in Weather-Screen
  */
 fun Forecast.getDailyData(day: Int): DailyData {
     if (day >= days.size) return DailyData("Unbekannt", 0, 0, 0, 0) //if day is higher than days.size in Forecast(7) return value is 0
@@ -134,21 +137,32 @@ fun Forecast.getWmoCodeAndIsNight(): Pair<Int, Boolean> {
 }
 
 /**
- * Loads for all cities the forecast out of cache or download and gives a map back with the key cityName.
- * @return list of cities and their forecasts
+ * Loads forecast-Data for all forecasts on the city list. With a fallback parameter
+ * @param previousForecasts Die bereits angezeigten Forecasts – dient als Fallback bei Fehlern.
  */
-suspend fun loadForecastsForCities(context: Context,cities: List<City>,forceRefresh : Boolean): Map<String, Forecast> {
+suspend fun loadForecastsForCities(context: Context, cities: List<City>, forceRefresh: Boolean, previousForecasts: Map<String, Forecast> = emptyMap()): Map<String, Forecast> {
     val appDir = context.filesDir
     val result = mutableMapOf<String, Forecast>()
-    for (city in cities) {      //updated forecast through the city list
-        try {
+
+    return try {
+        // Tries to load a forecast for every city on the CityList
+        for (city in cities) {
             val fc = getForecastFromCacheOrDownload(appDir, city.latitude, city.longitude, forceRefresh)
             result[city.cityName] = fc
-        } catch (_: Exception) {
-        // ignore error
-         }
+        }
+        result  // return new, updated forecasts
+
+    } catch (e: IOException) {
+        // Network IO errors
+        Toast.makeText(context, "Keine Internetverbindung", Toast.LENGTH_SHORT).show()
+        previousForecasts  // returns the old forecasts-List
+
+    } catch (e: Exception) {
+        // Different errors
+        Toast.makeText(context, "Fehler beim Laden der Daten", Toast.LENGTH_SHORT).show()
+        Log.e("loadForecastsForCities", "RefreshError: ${e.localizedMessage}", e)
+        previousForecasts  // returns the old forecasts-List
     }
-    return result   //return updated cities
 }
 
 /**

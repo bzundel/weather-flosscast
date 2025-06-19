@@ -1,5 +1,6 @@
 package de.frauas.weather_flosscast.ui
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -39,6 +40,7 @@ import de.frauas.weather_flosscast.getForecastFromCacheOrDownload
 import de.frauas.weather_flosscast.ui.theme.*
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
+import java.io.IOException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,14 +68,31 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
 
     // SwipeRefresh component over the rest of the components, It refreshed the forecast-data when swiping down with indicator
     SwipeRefresh(state = swipeState, onRefresh = {
-            scope.launch {
-                isRefreshing = true
-                forecast = city?.let { getForecastFromCacheOrDownload(context.filesDir, it.latitude, it.longitude, true)
-                } ?: throw IllegalArgumentException("City must not be null")    //getting new Forecast with null protection
-                Toast.makeText(context, "Daten aktualisiert", Toast.LENGTH_SHORT).show()
+        scope.launch {
+            isRefreshing = true
+
+            try {
+                // Trying to load new Forecast
+                val newForecast = city?.let {getForecastFromCacheOrDownload(context.filesDir,it.latitude,it.longitude,true)}
+                    ?: throw IllegalArgumentException("City darf nicht null sein") //if city-val is empty throw a toast
+
+                // update forecast values
+                forecast = newForecast
+                //Toast.makeText(context, "Daten aktualisiert", Toast.LENGTH_SHORT).show()  //Toast for debugging
+
+            } catch (e: IOException) {  //Catch IOException if there are problems with network
+                // If there is a network error, throw a toast
+                Toast.makeText(context, "Keine Internetverbindung", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {    //If there are some IO and different errors
+                // Throw a toast also
+                Toast.makeText(context, "Fehler beim Laden", Toast.LENGTH_SHORT).show()
+                Log.e("RefreshError", "Fehler beim Aktualisieren: ${e.localizedMessage}", e)
+            } finally {
+                // stop refresh-spinner
                 delay(1000)
                 isRefreshing = false
             }
+        }
         },
         indicator = { state, trigger -> SwipeRefreshIndicator(
                 state                   = state,

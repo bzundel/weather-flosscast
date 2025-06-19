@@ -84,7 +84,7 @@ fun SearchScreen(onCitySelected: (String) -> Unit, navController: NavController)
         //Update Forescreens and cityList at the start
     LaunchedEffect(savedCities) {
         isLoading = true                                                    //isLoading = true for shimmer-effect when loading the list
-        forecasts = loadForecastsForCities(context, savedCities, false)
+        forecasts = loadForecastsForCities(context, savedCities, false, forecasts)     //load Forecasts for the list
         savedCities = CityList.getCities(context)                           //refresh cityList direct at the beginning of the function
         isLoading = false                                                   //isLoading = false to disable the shimmer-effect
     }     //Loading forecast without forcing  the update(Taking data from cache first)
@@ -119,7 +119,7 @@ fun SearchScreen(onCitySelected: (String) -> Unit, navController: NavController)
             onRefresh = {                                                                           //isRefreshing = true for a animation
                 scope.launch {                                                                      //load all Forecasts with force boolean
                     isRefreshing = true
-                    forecasts = loadForecastsForCities(context, savedCities,true)
+                    forecasts = loadForecastsForCities(context, savedCities, true, forecasts)
                     savedCities = CityList.getCities(context)
                     ///Toast.makeText(context, "Daten aktualisiert", Toast.LENGTH_SHORT).show()     //Toast for debugging
                     delay(500) //Show loading animation longer
