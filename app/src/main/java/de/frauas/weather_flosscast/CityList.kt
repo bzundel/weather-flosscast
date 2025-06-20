@@ -15,18 +15,6 @@ object CityList {
     private const val CITY_LIST_KEY = "cityList"
     private val gson = Gson()
 
-    /** NOT NEEDED CITY LIST IS A SINGLETON
-     * Initializes the city list only if it doesn't already exist.
-    fun initializeCitiesIfEmpty(context: Context): City {
-        val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-        if (!prefs.contains(CITY_LIST_KEY)) {
-            return City("Empty", 0.0, 0.0)
-        }else{
-            val currentList = getCities(context).toMutableList()
-            return currentList.first()
-        }
-    }
-     */
     //used for changing whole City List
     fun saveCities(context: Context, cities: List<City>) {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -90,18 +78,8 @@ object CityList {
         // Save the updated list back to SharedPreferences
         saveCities(context, currentList)
     }
-
-    /**
-     * Clears all stored cities from SharedPreferences.
-     * Useful for debugging or reset functionality.
-     */
-    fun clearCities(context: Context) {
-        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-            .edit {
-                remove(CITY_LIST_KEY)
-            }
-    }
 }
+
 fun encodeCity(city: City): String {
     val json = Json.encodeToString(city)
     return Base64.encodeToString(json.toByteArray(Charsets.UTF_8), Base64.URL_SAFE or Base64.NO_WRAP)
