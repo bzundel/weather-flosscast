@@ -10,9 +10,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -48,20 +50,31 @@ fun WeatherScreen(cityName : String, onBack: () -> Unit) {
     val context = LocalContext.current                                      // Safe save for app context for Compose
     val city = CityList.getCities(context).find { it.cityName == cityName } //Getting cityData from CityList with find function
     var forecast by remember { mutableStateOf<Forecast?>(null) }            //Stores the forecast state and recomposition when updated
-
+    var showAlert by remember { mutableStateOf(false) }                    //remember state for a Dialog
 
     var isRefreshing by remember { mutableStateOf(false) }                  // Pull-to-Refresh state
     val scope      = rememberCoroutineScope()
     val swipeState = rememberSwipeRefreshState(isRefreshing)
 
-    //Getting forecast data @launch//
+    //Update forecasts at the start of the App!
     LaunchedEffect(cityName) {
-        if (city != null) { forecast = getForecastFromCacheOrDownload(context.filesDir, city!!.latitude, city!!.longitude) }
-        if (city == null) {
-            Toast.makeText(context, "Fehler, die Stadt exisitert nicht!", Toast.LENGTH_SHORT).show()
-            onBack()
-        }
+        forecast = loadForecastForOneCity(cityName, city, context, onBack).Forecast    //Updates forecasts or gets old cache data
+        showAlert = loadForecastForOneCity(cityName, city, context, onBack).error
     }
+    //If the forecast has any errors
+    if (showAlert) {    //AlertDialog for old Forecast data -> better User Experience
+        AlertDialog(
+            onDismissRequest = { showAlert = false },
+            confirmButton = {
+                TextButton( onClick = { showAlert = false }) {
+                    Text("OK")
+                }
+            },
+            title = { Text("Warnung") },
+            text = { Text("Daten veraltet!\nBitte Internetverbindung prüfen") }
+        )
+    }
+
     val currentForecast: Forecast = forecast ?: return          // load current forecast in variable
     val (wmoCode, isNight) = forecast!!.getWmoCodeAndIsNight()  //gets wmo-code and boolean for night-check
     val bgC = colorForWmoCode(wmoCode, isNight)                 //sets the background color for the whole screen

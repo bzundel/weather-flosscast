@@ -76,6 +76,8 @@ fun SearchScreen(onCitySelected: (String) -> Unit, navController: NavController)
     val scope = rememberCoroutineScope()
     val swipeState = rememberSwipeRefreshState(isRefreshing)            //State for the swipeAnimation
     val shimmerInstance = rememberShimmer(shimmerBounds = ShimmerBounds.Window)
+    var showAlert by remember { mutableStateOf(false) }                    //remember state for a Dialog
+
     /* BackHandler values */
     var lastBackPressedTime by remember { mutableStateOf(0L) }
     val backPressInterval = 1500L // 1,5 seconds
@@ -84,12 +86,25 @@ fun SearchScreen(onCitySelected: (String) -> Unit, navController: NavController)
         //Update Forescreens and cityList at the start
     LaunchedEffect(savedCities) {
         isLoading = true                                                    //isLoading = true for shimmer-effect when loading the list
-        forecasts = loadForecastsForCities(context, savedCities, false, forecasts)     //load Forecasts for the list
+        forecasts = loadForecastsForCities(context, savedCities, false).forecasts     //load Forecasts for the list
+        showAlert = loadForecastsForCities(context, savedCities, false).error        //shows error Box if there were Problems updading the list
         savedCities = CityList.getCities(context)                           //refresh cityList direct at the beginning of the function
         isLoading = false                                                   //isLoading = false to disable the shimmer-effect
     }     //Loading forecast without forcing  the update(Taking data from cache first)
 
-
+    //If the forecast list has any errors
+    if (showAlert) {    //AlertDialog for old Forecast data -> better User Experience
+        AlertDialog(
+            onDismissRequest = { showAlert = false },
+            confirmButton = {
+                TextButton( onClick = { showAlert = false }) {
+                    Text("OK")
+                }
+            },
+            title = { Text("Warnung") },
+            text = { Text("Daten veraltet!\nBitte Internetverbindung prüfen") }
+        )
+    }
     //BackHandler for resetting search field and closing the application
     BackHandler {
         if (inputText.isNotEmpty() || query.isNotEmpty()) {             // Reset state to "reload" SearchScreen
@@ -119,7 +134,7 @@ fun SearchScreen(onCitySelected: (String) -> Unit, navController: NavController)
             onRefresh = {                                                                           //isRefreshing = true for a animation
                 scope.launch {                                                                      //load all Forecasts with force boolean
                     isRefreshing = true
-                    forecasts = loadForecastsForCities(context, savedCities, true, forecasts)
+                    forecasts = loadForecastsForCities(context, savedCities, true).forecasts
                     savedCities = CityList.getCities(context)
                     ///Toast.makeText(context, "Daten aktualisiert", Toast.LENGTH_SHORT).show()     //Toast for debugging
                     delay(500) //Show loading animation longer
@@ -194,6 +209,7 @@ fun SearchScreen(onCitySelected: (String) -> Unit, navController: NavController)
                             }
                         )
                         Spacer(modifier = Modifier.height(16.dp))
+                        isLoading = true    //Start showing loading screen until when loading the (new)City Lists
                         CityListView(                           //CityListview function call
                             context = context,
                             query = query,
@@ -210,6 +226,7 @@ fun SearchScreen(onCitySelected: (String) -> Unit, navController: NavController)
                                 savedCities = CityList.getCities(context)
                             }
                         )
+                        isLoading = false   //Stop showing loading screen
                    }
                 }
             }
