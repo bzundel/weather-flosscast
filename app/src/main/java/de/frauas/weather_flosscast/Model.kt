@@ -1,13 +1,24 @@
 package de.frauas.weather_flosscast
 
+import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 data class Forecast(
     val timestamp: LocalDateTime,
     val days: List<DailyForecast>,
     val units: Units
-)
+) {
+    companion object {  //Default values when the list is empty --> eliminates errors
+        fun empty(): Forecast = Forecast(
+            timestamp = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
+            days = emptyList(),
+            units = Units.default()
+        )
+    }
+}
 
 data class DailyForecast(
     val date: LocalDate,
@@ -34,7 +45,18 @@ data class Units(
     val rain: String,
     val showers: String,
     val snow: String,
-)
+) { //Default values when the list is empty
+    companion object {
+        fun default() = Units(
+            temperature = "°C",
+            humidity = "%",
+            precipitationProbability = "%",
+            rain = "mm",
+            showers = "mm",
+            snow = "cm"
+        )
+    }
+}
 
 @kotlinx.serialization.Serializable
 data class City(
