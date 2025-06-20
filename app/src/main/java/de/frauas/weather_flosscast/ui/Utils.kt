@@ -5,6 +5,15 @@ import android.util.Log
 import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.annotation.RawRes
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import de.frauas.weather_flosscast.City
 import de.frauas.weather_flosscast.Forecast
@@ -16,6 +25,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import java.io.IOException
 import java.time.LocalDateTime
+import kotlin.collections.mutableMapOf
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.hours
 
@@ -140,7 +150,8 @@ fun Forecast.getWmoCodeAndIsNight(): Pair<Int, Boolean> {
  * Loads forecast-Data for all forecasts on the city list. With a fallback parameter
  * @param previousForecasts Die bereits angezeigten Forecasts – dient als Fallback bei Fehlern.
  */
-suspend fun loadForecastsForCities(context: Context, cities: List<City>, forceRefresh: Boolean, previousForecasts: Map<String, Forecast> = emptyMap()): Map<String, Forecast> {
+data class ForecastsUpdated(val forecasts : Map<String, Forecast>, val error : Boolean) //Return values of loading Forecast functions
+suspend fun loadForecastsForCities(context: Context, cities: List<City>, forceRefresh: Boolean,) : ForecastsUpdated {
     val appDir = context.filesDir
     val result = mutableMapOf<String, Forecast>()
 
@@ -150,19 +161,52 @@ suspend fun loadForecastsForCities(context: Context, cities: List<City>, forceRe
             val fc = getForecastFromCacheOrDownload(appDir, city.latitude, city.longitude, forceRefresh)
             result[city.cityName] = fc
         }
-        result  // return new, updated forecasts
+        ForecastsUpdated(result, false)  // return new, updated forecasts
 
     } catch (e: IOException) {
         // Network IO errors
         Toast.makeText(context, "Keine Internetverbindung", Toast.LENGTH_SHORT).show()
-        previousForecasts  // returns the old forecasts-List
+        for (city in cities) {
+            val fc = getForecastFromCacheOrDownload(appDir, city.latitude, city.longitude, false, false)
+            result[city.cityName] = fc
+        }
+        ForecastsUpdated(result, true)  // returns the old, cached forecasts-List
 
     } catch (e: Exception) {
         // Different errors
         Toast.makeText(context, "Fehler beim Laden der Daten", Toast.LENGTH_SHORT).show()
         Log.e("loadForecastsForCities", "RefreshError: ${e.localizedMessage}", e)
-        previousForecasts  // returns the old forecasts-List
-    }
+        for (city in cities) {
+            val fc = getForecastFromCacheOrDownload(appDir, city.latitude, city.longitude, false, false)
+            result[city.cityName] = fc
+        }
+        ForecastsUpdated(result, true)  // returns the old, cached forecasts-List
+    } as ForecastsUpdated
+}
+
+data class ForecastUpdated(val Forecast : Forecast, val error: Boolean) //Return values of loading Forecast functions
+suspend fun loadForecastForOneCity(cityName: String, city: City?, context: Context, onBack: () -> Unit) : ForecastUpdated{
+    //Getting forecast data @launch//
+        //Try catch for loading new forecast-data
+        return try {
+            if (city != null) {
+                //update forecast data when city != null
+                ForecastUpdated(getForecastFromCacheOrDownload(context.filesDir, city!!.latitude, city!!.longitude), false)
+            }else {
+                //otherwise User info
+                Toast.makeText(context, "Fehler, die Stadt exisitert nicht!", Toast.LENGTH_SHORT).show()
+                onBack()
+            }
+        }catch (e: IOException){    //If getForecastFromCacheOrDownload function has some errors:
+            //showAlert = true        //Give user a feedback that the data is old and the update did not work -> showAlert from above
+            Log.e("InternetRefreshError", "Internetfehler beim Aktualisieren: ${e.localizedMessage}", e)
+            ForecastUpdated(getForecastFromCacheOrDownload(context.filesDir, city!!.latitude, city!!.longitude, false, false) ?: Forecast.empty(), true)    //if there are network errors
+        }catch (e: Exception){                                                                                           //Load old data or empty List and give User a warning!
+            //showAlert = true   //Give user a feedback that the data is old and the update did not work -> showAlert from above
+            Toast.makeText(context, "Fehler beim Laden", Toast.LENGTH_SHORT).show()
+            Log.e("RefreshError", "Fehler beim Aktualisieren: ${e.localizedMessage}", e)
+            ForecastUpdated(getForecastFromCacheOrDownload(context.filesDir, city!!.latitude, city!!.longitude, false, false) ?: Forecast.empty(), true)    //Load forecast from Cache only
+        } as ForecastUpdated
 }
 
 /**
