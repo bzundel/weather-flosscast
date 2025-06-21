@@ -26,28 +26,66 @@ import java.io.File
 import java.io.IOException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
-import kotlin.time.Duration.Companion.minutes
 
 private val logger = KotlinLogging.logger { }
 
-// convert double to string with two digits after the decimal point
+/**
+ * Trim double value to string
+ *
+ * Takes some double value and returns it as a string, stripped down to one digit after the dot.
+ *
+ * @param value double to trim and convert to string
+ * @return a string representing the double value with one digit after the dot
+ */
 private fun stripCoordinate(value: Double): String {
     return String.format(Locale.ENGLISH, "%.1f", value)
 }
 
-private fun coordinateToCacheFormat(latitude: Double, longitude: Double) = "${stripCoordinate(latitude)}:${stripCoordinate(longitude)}"
+/**
+ * Create coordinate tuple string
+ *
+ * Takes a latitude and longitude value and substitutes them to into a string, separated by a colon. Required format for accessing the cache object.
+ *
+ * @param latitude latitude part of the coordinate
+ * @param longitude longitude part of the coordinate
+ * @return a string containing both latitude and longitude separated by a colon
+ */
+private fun coordinateToCacheFormat(latitude: Double, longitude: Double): String = "${stripCoordinate(latitude)}:${stripCoordinate(longitude)}"
 
-// build forecast request url from latitude and longitude values
+/**
+ * Build forecast request URL
+ *
+ * Takes a latitude and longitude value and substitutes them into the desired request URL to the open-meteo forecast API. Ensures that all required information is requested in the URL.
+ *
+ * @param latitude latitude part of the coordinate
+ * @param longitude longitude part of the coordinate
+ * @return a string containing the request URL to the open-meteo forecast API with the latitude and longitude fields filled out
+ */
 private fun buildForecastUrl(latitude: Double, longitude: Double): String {
     return "https://api.open-meteo.com/v1/forecast?latitude=${stripCoordinate(latitude)}&longitude=${stripCoordinate(longitude)}&daily=sunrise,sunset&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,rain,showers,snowfall"
 }
 
-// build geocoding request url from latitude and longitude values
+/**
+ * Build geocoding request URL
+ *
+ * Takes a latitude and longitude value and substitutes them into the desired request URL to the open-meteo geocoding API. Ensures that all required information is requested in the URL.
+ *
+ * @param search city name (sub)string
+ * @return a string containing the request URL to the open-meteo geocoding API with the latitude and longitude fields filled out
+ */
 private fun buildGeocodingUrl(search: String): String {
     return "https://geocoding-api.open-meteo.com/v1/search?name=${search}&count=10&language=en&format=json"
 }
 
-// make a call to the request url and return the raw response as a string
+/**
+ * Send a request to the given URL and return the raw response
+ *
+ * A helper function that takes care of a safe request process with the API. Ensures all exceptions and unexpected behaviors are logged and forwarded.
+ *
+ * @param requestUrl the URL to make a request to
+ * @return the raw response from the endpoint if the request was successful
+ * @throws IOException if the request failed
+ */
 private fun getRawResponse(requestUrl: String): String {
     val url = URL(requestUrl)
     var connection: HttpURLConnection? = null
@@ -77,7 +115,15 @@ private fun getRawResponse(requestUrl: String): String {
     }
 }
 
-// extension function to replace non-null assertion
+/**
+ * Get key or throw an exception if it doesn't exist
+ *
+ * Extension function to the [JsonObject] class for retrieving a value by key, throwing an [IllegalArgumentException] if the key does not exist.
+ *
+ * @param key key of the desired value
+ * @return a [JsonElement] if the key was found
+ * @throws IllegalArgumentException if the key is not found
+ */
 private fun JsonObject.getOrThrow(key: String): JsonElement =
     this[key] ?: run {
         val message = "Key '${key} not found in JsonObject"
@@ -86,13 +132,24 @@ private fun JsonObject.getOrThrow(key: String): JsonElement =
         throw IllegalArgumentException(message)
     }
 
+/**
+ * Converts raw API response to a [Forecast] object
+ *
+ * Takes in the raw response from the API and manually parses the JSON to a [Forecast] object.
+ *
+ * @param body raw JSON response from API
+ * @return a [Forecast] object on successful parsing
+ * @throws SerializationException if the passed JSON cannot be parsed
+ * @throws IllegalArgumentException if a requested key does not exist in a [JsonObject]
+ * @throws IllegalStateException if the response arrays have a mismatch in length
+ */
 private fun convertToForecastObject(body: String): Forecast {
     val json: JsonObject = try {
         Json.parseToJsonElement(body).jsonObject
     } catch (e: SerializationException) {
         logger.error { "Could not parse received JSON. ${e.message}" }
 
-        throw Exception("Could not parse to objects", e)
+        throw SerializationException("Could not parse to objects", e)
     }
 
     // extract units of hourly data
@@ -145,6 +202,8 @@ private fun convertToForecastObject(body: String): Forecast {
         ) { "Retrieved lists are of different sizes" }
     } catch (e: IllegalStateException) {
         logger.error { "Retrieved lists are of different sizes. Some magical API error? ${e.message}" }
+
+        throw IllegalStateException("Retrieved lists from API are of different sizes. Weird things are happening.", e)
     }
 
     logger.info { "Passed list size assertion" }
@@ -185,6 +244,15 @@ private fun convertToForecastObject(body: String): Forecast {
     return Forecast(currentTime, dailyForecasts, units)
 }
 
+/**
+ * Retrieve [Forecast] object from the API
+ *
+ * A helper function that bundles the API request process. Makes a request to the forecast endpoint, parses the response and returns the [Forecast] object.
+ *
+ * @param latitude latitude part of the coordinate
+ * @param longitude longitude part of the coordinate
+ * @return retrieved [Forecast] object
+ */
 private fun downloadForecast(latitude: Double, longitude: Double): Forecast {
     val url = buildForecastUrl(latitude, longitude)
     val body = getRawResponse(url)
@@ -193,7 +261,21 @@ private fun downloadForecast(latitude: Double, longitude: Double): Forecast {
     return forecast
 }
 
-// exposed function to get forecast from cache or api
+/**
+ * Retrieve [Forecast] object from cache of from the API
+ *
+ * Exposed helper function to bundle the entire retrieval process. Initially checks the cache for a usable target and falls back to making a request to the API.
+ *
+ * @param appDir [File] object pointing to the the files directory of the app
+ * @param latitude latitude part of the coordinate
+ * @param longitude longitude part of the coordinate
+ * @param forceUpdate ignore cache age checks and always pull from internet
+ * @param updateOnlyIfTrue i literally have no idea what this does, ask patryk
+ * @return [Forecast] object retrieved from the cache or API
+ * @throws SerializationException if the JSON from the API or cache cannot be parsed
+ * @throws IllegalArgumentException if a requested key does not exist in a [JsonObject] during parsing
+ * @throws IllegalStateException insane behavior that should never happen
+ */
 suspend fun getForecastFromCacheOrDownload(appDir: File, latitude: Double, longitude: Double, forceUpdate: Boolean = false, updateOnlyIfTrue : Boolean = true): Forecast {
     return withContext(Dispatchers.IO) {
         val cacheFile: File = File(appDir, "cache.json")
@@ -214,7 +296,7 @@ suspend fun getForecastFromCacheOrDownload(appDir: File, latitude: Double, longi
         } catch (e: SerializationException) {
             logger.error { "Could not parse cache JSON. ${e.message}" }
 
-            throw Exception("Could not parse cache to array", e)
+            throw SerializationException("Could not parse cache to array", e)
         }
 
         logger.info { "Parsed cache file successfully" }
@@ -249,14 +331,13 @@ suspend fun getForecastFromCacheOrDownload(appDir: File, latitude: Double, longi
 
             logger.info { "Successfully deserialized cached forecast" }
 
-            // check if cache value is older than an hour
-            if ((shouldUpdateCache(cacheForecast.timestamp) || forceUpdate) && updateOnlyIfTrue) {   //forceUpdate and ignoreTimeStamp
-                // update cached value                                                               //->safety booleans to control downloaded Forecasts
+            // check if cache value is older than an hour or an update is desired in the first place
+            if ((shouldUpdateCache(cacheForecast.timestamp) || forceUpdate) && updateOnlyIfTrue) {
+                // update cached value
                 val currentForecast: Forecast = downloadForecast(latitude, longitude)
                 val currentForecastJson = serializeForecast(currentForecast)
                 val updatedCacheForecastList: JsonObject = JsonObject(cacheForecastList + (coordinatesCacheFormat to currentForecastJson))
                 cacheFile.writeText(updatedCacheForecastList.toString())
-                // FIXME maybe outsource to function? same code twice
 
                 logger.info { "Updated forecast cache for coordinates $coordinatesCacheFormat" }
 
@@ -271,7 +352,14 @@ suspend fun getForecastFromCacheOrDownload(appDir: File, latitude: Double, longi
     }
 }
 
-// check if cached value is more than an hour old
+/**
+ * Check age of cache
+ *
+ * Compares the cache entry timestamp to the current one and returns true if the cache entry is older than an hour.
+ *
+ * @param cacheTimestamp timestamp from cache entry
+ * @return true if [cacheTimestamp] is older than an hour
+ */
 private fun shouldUpdateCache(cacheTimestamp: LocalDateTime): Boolean {
     val currentTimezone: TimeZone = TimeZone.currentSystemDefault()
     val currentTimestamp = Clock.System.now().toLocalDateTime(currentTimezone)
@@ -284,7 +372,12 @@ private fun shouldUpdateCache(cacheTimestamp: LocalDateTime): Boolean {
     return duration > 1.hours
 }
 
-// serialize forecast object to jsonobject for writing
+/**
+ * Serialize [Forecast] to [JsonObject]
+ *
+ * @param forecast [Forecast] object to serialize
+ * @return [JsonObject] representation of forecast
+ */
 fun serializeForecast(forecast: Forecast): JsonObject {
     return buildJsonObject {
         put("timestamp", LocalDateTime.Formats.ISO.format(Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())))
@@ -323,7 +416,13 @@ fun serializeForecast(forecast: Forecast): JsonObject {
     }
 }
 
-// deserialize jsonobject to forecast object for reading
+/**
+ * Deserialize [JsonObject] to [Forecast]
+ *
+ * @param json [JsonObject] to deserialize
+ * @return [Forecast] object representation of passed [JsonObject]
+ * @throws IllegalArgumentException if a key cannot be found in passed [JsonObject]
+ */
 private fun deserializeForecast(json: JsonObject): Forecast {
     val timestamp: LocalDateTime =
         LocalDateTime.parse(json.getOrThrow("timestamp").jsonPrimitive.content)
@@ -365,7 +464,16 @@ private fun deserializeForecast(json: JsonObject): Forecast {
     return Forecast(timestamp, days, units)
 }
 
-// make a request to the open-meteo geocoding api and return the matches
+/**
+ * Retrieve [City] list from name (sub)string
+ *
+ * Makes a call to request 10 cities based on a (partially) complete city name. Response is parsed into a list of [City].
+ *
+ * @param search (sub)string of the desired city name
+ * @return list of [City] with max. size 10 matching the substring
+ * @throws SerializationException if response JSON cannot be parsed
+ * @throws IllegalArgumentException if key does not exist in [JsonObject]
+ */
 suspend fun getCitySearchResults(search: String): List<City> {
     return withContext(Dispatchers.IO) {
         val url: String = buildGeocodingUrl(search)
@@ -376,7 +484,7 @@ suspend fun getCitySearchResults(search: String): List<City> {
         } catch (e: SerializationException) {
             logger.error { "Could not parse received JSON. ${e.message}" }
 
-            throw Exception("Could not parse to objects", e)
+            throw SerializationException("Could not parse to objects", e)
         }
 
         logger.info { "Deserialized API response" }
